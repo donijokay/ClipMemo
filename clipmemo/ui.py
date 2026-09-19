@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import tkinter as tk
 from typing import Callable, List, Optional
 
 import customtkinter as ctk
@@ -11,9 +10,10 @@ import pyperclip
 from clipmemo.storage import Memo, Storage
 
 # Visual constants
-PANEL_WIDTH = 400
-PANEL_HEIGHT = 520
-PREVIEW_LEN = 120
+PANEL_WIDTH = 380
+PANEL_HEIGHT = 500
+PREVIEW_LEN = 100
+ACCENT = "#409CFF"
 
 ctk.set_appearance_mode("dark")
 ctk.set_default_color_theme("blue")
@@ -30,13 +30,13 @@ class EditDialog(ctk.CTkToplevel):
     ) -> None:
         super().__init__(master)
         self.title("Edit Memo")
-        self.geometry("420x280")
+        self.geometry("400x260")
         self.resizable(True, True)
         self.transient(master)
         self.grab_set()
         self._on_save = on_save
 
-        ctk.CTkLabel(self, text="Edit teks memo:", font=ctk.CTkFont(size=13)).pack(
+        ctk.CTkLabel(self, text="Edit teks:", font=ctk.CTkFont(size=13)).pack(
             anchor="w", padx=12, pady=(12, 4)
         )
         self._box = ctk.CTkTextbox(self, wrap="word", font=ctk.CTkFont(size=12))
@@ -45,10 +45,10 @@ class EditDialog(ctk.CTkToplevel):
 
         btn_row = ctk.CTkFrame(self, fg_color="transparent")
         btn_row.pack(fill="x", padx=12, pady=12)
-        ctk.CTkButton(btn_row, text="Batal", width=90, command=self.destroy).pack(
+        ctk.CTkButton(btn_row, text="Batal", width=80, command=self.destroy).pack(
             side="right", padx=(8, 0)
         )
-        ctk.CTkButton(btn_row, text="Simpan", width=90, command=self._save).pack(
+        ctk.CTkButton(btn_row, text="Simpan", width=80, command=self._save).pack(
             side="right"
         )
         self.after(50, self._box.focus_set)
@@ -60,7 +60,7 @@ class EditDialog(ctk.CTkToplevel):
 
 
 class MemoRow(ctk.CTkFrame):
-    """One memo row: preview, pin, edit, delete."""
+    """One memo row: click text to copy; 📌 / Edit / Hapus."""
 
     def __init__(
         self,
@@ -70,22 +70,23 @@ class MemoRow(ctk.CTkFrame):
         on_edit: Callable[[Memo], None],
         on_pin: Callable[[Memo], None],
         on_delete: Callable[[Memo], None],
+        on_hint: Optional[Callable[[str], None]] = None,
         **kwargs,
     ) -> None:
         super().__init__(master, corner_radius=8, **kwargs)
         self.memo = memo
+        self._on_hint = on_hint or (lambda _m: None)
 
         preview = memo.text.replace("\n", " ").strip()
         if len(preview) > PREVIEW_LEN:
             preview = preview[: PREVIEW_LEN - 1] + "…"
-        pin_mark = "📌 " if memo.pinned else ""
 
         left = ctk.CTkFrame(self, fg_color="transparent")
         left.pack(side="left", fill="both", expand=True, padx=(8, 4), pady=6)
 
         self._label = ctk.CTkLabel(
             left,
-            text=f"{pin_mark}{preview}",
+            text=preview,
             anchor="w",
             justify="left",
             font=ctk.CTkFont(size=12),
@@ -93,25 +94,55 @@ class MemoRow(ctk.CTkFrame):
         )
         self._label.pack(fill="x")
         self._label.bind("<Button-1>", lambda e: on_copy(memo))
+        self._label.bind(
+            "<Enter>", lambda e: self._on_hint("Klik untuk salin")
+        )
         self.bind("<Button-1>", lambda e: on_copy(memo))
 
         btns = ctk.CTkFrame(self, fg_color="transparent")
-        btns.pack(side="right", padx=4, pady=4)
+        btns.pack(side="right", padx=2, pady=4)
 
-        pin_text = "Lepas" if memo.pinned else "Semat"
-        ctk.CTkButton(
-            btns, text=pin_text, width=52, height=26, font=ctk.CTkFont(size=11),
+        pin_sym = "📌" if memo.pinned else "○"
+        pin_hint = "Lepas sematan" if memo.pinned else "Semat"
+        b_pin = ctk.CTkButton(
+            btns,
+            text=pin_sym,
+            width=28,
+            height=26,
+            font=ctk.CTkFont(size=12),
+            fg_color="transparent",
+            hover_color=("gray75", "gray25"),
             command=lambda: on_pin(memo),
-        ).pack(side="left", padx=2)
-        ctk.CTkButton(
-            btns, text="Edit", width=44, height=26, font=ctk.CTkFont(size=11),
+        )
+        b_pin.pack(side="left", padx=1)
+        b_pin.bind("<Enter>", lambda e, h=pin_hint: self._on_hint(h))
+
+        b_edit = ctk.CTkButton(
+            btns,
+            text="✎",
+            width=28,
+            height=26,
+            font=ctk.CTkFont(size=13),
+            fg_color="transparent",
+            hover_color=("gray75", "gray25"),
             command=lambda: on_edit(memo),
-        ).pack(side="left", padx=2)
-        ctk.CTkButton(
-            btns, text="Hapus", width=50, height=26, font=ctk.CTkFont(size=11),
-            fg_color="#8B3A3A", hover_color="#A04545",
+        )
+        b_edit.pack(side="left", padx=1)
+        b_edit.bind("<Enter>", lambda e: self._on_hint("Edit"))
+
+        b_del = ctk.CTkButton(
+            btns,
+            text="✕",
+            width=28,
+            height=26,
+            font=ctk.CTkFont(size=12),
+            fg_color="transparent",
+            text_color="#E07070",
+            hover_color="#5A3030",
             command=lambda: on_delete(memo),
-        ).pack(side="left", padx=2)
+        )
+        b_del.pack(side="left", padx=1)
+        b_del.bind("<Enter>", lambda e: self._on_hint("Hapus"))
 
 
 class ClipMemoApp(ctk.CTk):
@@ -122,71 +153,120 @@ class ClipMemoApp(ctk.CTk):
         storage: Storage,
         on_copy_notify: Optional[Callable[[str], None]] = None,
         on_quit_request: Optional[Callable[[], None]] = None,
+        get_autostart: Optional[Callable[[], bool]] = None,
+        set_autostart: Optional[Callable[[bool], None]] = None,
     ) -> None:
         super().__init__()
         self.storage = storage
         self.on_copy_notify = on_copy_notify
         self.on_quit_request = on_quit_request
+        self.get_autostart = get_autostart
+        self.set_autostart = set_autostart
+        self._status_timer: Optional[str] = None
 
         self.title("ClipMemo")
         self.geometry(f"{PANEL_WIDTH}x{PANEL_HEIGHT}")
         self.minsize(PANEL_WIDTH, 360)
         self.protocol("WM_DELETE_WINDOW", self.hide_to_tray)
 
-        # Header
+        # Header: CM badge + title + hotkey hint
         header = ctk.CTkFrame(self, fg_color="transparent")
-        header.pack(fill="x", padx=12, pady=(12, 4))
+        header.pack(fill="x", padx=12, pady=(10, 2))
+
+        badge = ctk.CTkLabel(
+            header,
+            text="CM",
+            width=28,
+            height=28,
+            corner_radius=6,
+            fg_color=ACCENT,
+            text_color="white",
+            font=ctk.CTkFont(size=11, weight="bold"),
+        )
+        badge.pack(side="left", padx=(0, 8))
+
         ctk.CTkLabel(
             header,
             text="ClipMemo",
-            font=ctk.CTkFont(size=18, weight="bold"),
+            font=ctk.CTkFont(size=16, weight="bold"),
         ).pack(side="left")
+
         ctk.CTkLabel(
             header,
             text="Ctrl+Shift+V",
             font=ctk.CTkFont(size=11),
-            text_color="gray70",
+            text_color="gray60",
         ).pack(side="right")
 
         # Search
-        search_frame = ctk.CTkFrame(self, fg_color="transparent")
-        search_frame.pack(fill="x", padx=12, pady=4)
         self._search = ctk.CTkEntry(
-            search_frame,
-            placeholder_text="Cari memo…",
+            self,
+            placeholder_text="Cari…",
             font=ctk.CTkFont(size=12),
+            height=32,
         )
-        self._search.pack(fill="x")
+        self._search.pack(fill="x", padx=12, pady=(6, 2))
         self._search.bind("<KeyRelease>", lambda e: self.refresh_list())
 
-        # Status
+        # Status under search
         self._status = ctk.CTkLabel(
-            self, text="", font=ctk.CTkFont(size=11), text_color="gray60", anchor="w"
+            self,
+            text="",
+            font=ctk.CTkFont(size=11),
+            text_color="gray55",
+            anchor="w",
         )
-        self._status.pack(fill="x", padx=14, pady=(2, 0))
+        self._status.pack(fill="x", padx=14, pady=(0, 2))
 
         # Scrollable list
         self._list = ctk.CTkScrollableFrame(self, fg_color=("gray90", "gray17"))
-        self._list.pack(fill="both", expand=True, padx=10, pady=8)
+        self._list.pack(fill="both", expand=True, padx=10, pady=(4, 6))
 
-        # Footer actions
+        # Footer strip
         footer = ctk.CTkFrame(self, fg_color="transparent")
-        footer.pack(fill="x", padx=12, pady=(0, 12))
-        ctk.CTkButton(
-            footer, text="Segarkan", width=90, height=28, command=self.refresh_list
-        ).pack(side="left")
+        footer.pack(fill="x", padx=12, pady=(0, 4))
+
         ctk.CTkButton(
             footer,
-            text="Hapus tidak tersemat",
-            width=150,
+            text="Bersihkan",
+            width=88,
             height=28,
-            fg_color="#5A4A2A",
-            hover_color="#6B5A35",
+            font=ctk.CTkFont(size=12),
+            fg_color=("gray70", "gray30"),
+            hover_color=("gray60", "gray35"),
             command=self._clear_unpinned,
-        ).pack(side="left", padx=6)
+        ).pack(side="left")
+
         ctk.CTkButton(
-            footer, text="Sembunyikan", width=100, height=28, command=self.hide_to_tray
+            footer,
+            text="Sembunyikan",
+            width=100,
+            height=28,
+            font=ctk.CTkFont(size=12),
+            command=self.hide_to_tray,
         ).pack(side="right")
+
+        # Autostart checkbox (settings strip)
+        if self.get_autostart is not None and self.set_autostart is not None:
+            auto_row = ctk.CTkFrame(self, fg_color="transparent")
+            auto_row.pack(fill="x", padx=12, pady=(0, 10))
+            initial = False
+            try:
+                initial = bool(self.get_autostart())
+            except Exception:
+                initial = False
+            self._autostart_var = ctk.BooleanVar(value=initial)
+            self._autostart_cb = ctk.CTkCheckBox(
+                auto_row,
+                text="Mulai otomatis saat Windows nyala",
+                font=ctk.CTkFont(size=11),
+                variable=self._autostart_var,
+                command=self._on_autostart_toggle,
+            )
+            self._autostart_cb.pack(anchor="w")
+        else:
+            self._autostart_var = None
+            self._autostart_cb = None
 
         self._rows: List[MemoRow] = []
         self.refresh_list()
@@ -203,6 +283,7 @@ class ClipMemoApp(ctk.CTk):
             self._search.focus_set()
         except Exception:
             pass
+        self._sync_autostart_ui()
 
     def hide_to_tray(self) -> None:
         self.withdraw()
@@ -226,10 +307,14 @@ class ClipMemoApp(ctk.CTk):
         self._rows.clear()
 
         if not memos:
-            msg = ("Salin teks apa saja — akan muncul di sini." if not query else "Tidak ada hasil pencarian.")
+            msg = (
+                "Salin teks apa saja — akan muncul di sini."
+                if not query
+                else "Tidak ada hasil."
+            )
             ctk.CTkLabel(
                 self._list, text=msg, text_color="gray60", font=ctk.CTkFont(size=12)
-            ).pack(pady=20)
+            ).pack(pady=24)
         else:
             for memo in memos:
                 row = MemoRow(
@@ -239,15 +324,13 @@ class ClipMemoApp(ctk.CTk):
                     on_edit=self._edit_memo,
                     on_pin=self._toggle_pin,
                     on_delete=self._delete_memo,
+                    on_hint=self._set_hint,
                 )
-                row.pack(fill="x", pady=3)
+                row.pack(fill="x", pady=2)
                 self._rows.append(row)
 
         total = len(self.storage.list_memos())
-        pinned = sum(1 for m in self.storage.list_memos() if m.pinned)
-        self._status.configure(
-            text=f"{total} memo · {pinned} tersemat · klik untuk salin ulang"
-        )
+        self._set_status(f"{total} memo")
 
     def schedule_refresh(self) -> None:
         """Thread-safe UI refresh."""
@@ -263,7 +346,7 @@ class ClipMemoApp(ctk.CTk):
             pyperclip.copy(memo.text)
             if self.on_copy_notify:
                 self.on_copy_notify(memo.text)
-            self._flash_status("Disalin ke clipboard.")
+            self._flash_status("Disalin.")
         except Exception:
             self._flash_status("Gagal menyalin.")
 
@@ -278,19 +361,62 @@ class ClipMemoApp(ctk.CTk):
     def _toggle_pin(self, memo: Memo) -> None:
         self.storage.set_pinned(memo.id, not memo.pinned)
         self.refresh_list()
+        self._flash_status("Lepas." if memo.pinned else "Disemat.")
 
     def _delete_memo(self, memo: Memo) -> None:
         self.storage.delete(memo.id)
         self.refresh_list()
+        self._flash_status("Dihapus.")
 
     def _clear_unpinned(self) -> None:
         n = self.storage.clear_unpinned()
         self.refresh_list()
-        self._flash_status(f"{n} memo tidak tersemat dihapus.")
+        self._flash_status(f"Bersih · {n} dihapus." if n else "Tidak ada yang dihapus.")
+
+    def _on_autostart_toggle(self) -> None:
+        if self.set_autostart is None or self._autostart_var is None:
+            return
+        enabled = bool(self._autostart_var.get())
+        try:
+            self.set_autostart(enabled)
+            self._flash_status(
+                "Autostart aktif." if enabled else "Autostart nonaktif."
+            )
+        except Exception:
+            self._flash_status("Gagal mengatur autostart.")
+            self._sync_autostart_ui()
+
+    def _sync_autostart_ui(self) -> None:
+        if self._autostart_var is None or self.get_autostart is None:
+            return
+        try:
+            self._autostart_var.set(bool(self.get_autostart()))
+        except Exception:
+            pass
+
+    def _set_hint(self, msg: str) -> None:
+        """Show hover hint without resetting the count timer aggressively."""
+        self._set_status(msg)
+
+    def _set_status(self, msg: str) -> None:
+        try:
+            self._status.configure(text=msg)
+        except Exception:
+            pass
 
     def _flash_status(self, msg: str) -> None:
-        self._status.configure(text=msg)
-        self.after(2000, self.refresh_list)
+        self._set_status(msg)
+        if self._status_timer is not None:
+            try:
+                self.after_cancel(self._status_timer)
+            except Exception:
+                pass
+        self._status_timer = self.after(1800, self._restore_count_status)
+
+    def _restore_count_status(self) -> None:
+        total = len(self.storage.list_memos())
+        self._set_status(f"{total} memo")
+        self._status_timer = None
 
     def request_quit(self) -> None:
         if self.on_quit_request:

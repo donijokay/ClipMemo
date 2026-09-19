@@ -6,6 +6,7 @@ import sys
 import threading
 from typing import Callable, Optional
 
+from clipmemo import autostart
 from clipmemo.clipboard_watcher import ClipboardWatcher
 from clipmemo.storage import Storage
 from clipmemo.tray import TrayIcon
@@ -89,6 +90,8 @@ class Application:
             storage=self.storage,
             on_copy_notify=self._on_app_copy,
             on_quit_request=self.shutdown,
+            get_autostart=autostart.is_enabled,
+            set_autostart=autostart.set_enabled,
         )
 
         self.watcher = ClipboardWatcher(on_new_text=self._on_clipboard_text)
@@ -97,6 +100,8 @@ class Application:
         self.tray = TrayIcon(
             on_open=self._open_from_tray,
             on_quit=self.shutdown,
+            get_autostart=autostart.is_enabled,
+            set_autostart=autostart.set_enabled,
         )
         self.tray.start()
 

@@ -12,11 +12,12 @@ UI strings are in **Indonesian**. This README is bilingual.
 |-------|-------------|
 | Auto-simpan | Polls clipboard ~every 0.5s; skips empty, duplicate-of-last, and >100KB |
 | Banyak memo | Edit, pin (tersemat), hapus, cari live, klik untuk salin ulang |
-| System tray | Menu **Buka** / **Keluar** |
+| System tray | Ikon **CM** (badge biru); menu **Buka** / **Autostart** / **Keluar** |
+| Autostart | Toggle di UI (“Mulai otomatis saat Windows nyala”) atau tray — daftar di Run registry (Windows) |
 | Hotkey | **Ctrl+Shift+V** (keyboard on Windows; pynput fallback; degrades if unavailable) |
 | Persistensi | `%APPDATA%\ClipMemo\` (Windows) · `~/.config/ClipMemo` (Linux) |
 | Cap | Max **100** unpinned memos; pinned are never dropped |
-| UI | Dark compact ~400px panel (customtkinter) |
+| UI | Dark compact ~380×500 panel (customtkinter), minimal Indonesia |
 
 ---
 
@@ -52,21 +53,22 @@ python -m clipmemo
 
 Or double-click **`run.bat`** (uses system `python`).
 
-4. Optional — create a shortcut to `run.bat` and place it in the Startup folder  
-   (`Win+R` → `shell:startup`) so ClipMemo starts with Windows.
+4. **Autostart** — di panel, centang **Mulai otomatis saat Windows nyala**, atau klik kanan ikon tray → **Autostart**.  
+   ClipMemo menulis `%APPDATA%\ClipMemo\start_clipmemo.cmd` dan mendaftarkannya di  
+   `HKCU\Software\Microsoft\Windows\CurrentVersion\Run` (nama nilai `ClipMemo`).  
+   Preferensi juga disimpan di `settings.json`.
 
 ---
 
 ## Penggunaan / Usage
 
 1. Salin teks di mana saja (Ctrl+C) — memo baru muncul di daftar.
-2. Buka panel dengan **Ctrl+Shift+V** atau klik kanan ikon tray → **Buka**.
-3. **Klik** baris memo → teks disalin kembali ke clipboard.
-4. **Semat** / **Lepas** — pin ke atas; memo tersemat tidak ikut dibuang saat cap 100.
-5. **Edit** — ubah teks memo.
-6. **Hapus** — buang satu memo.
-7. Ketik di kolom **Cari memo…** untuk filter live.
-8. **Sembunyikan** / tutup jendela — app tetap di tray. **Keluar** dari tray untuk stop penuh.
+2. Buka panel dengan **Ctrl+Shift+V** atau klik kanan ikon tray **CM** → **Buka**.
+3. **Klik** baris memo → teks disalin kembali ke clipboard (“Disalin.”).
+4. Tombol baris: **📌** semat/lepas · **✎** edit · **✕** hapus (hint di status saat hover).
+5. Ketik di kolom **Cari…** untuk filter live.
+6. **Bersihkan** — hapus semua memo yang tidak tersemat.
+7. **Sembunyikan** / tutup jendela — app tetap di tray. **Keluar** dari tray untuk stop penuh.
 
 ---
 
@@ -81,14 +83,15 @@ ClipMemo/
 │   ├── storage.py           # JSON persistence + pin/cap
 │   ├── clipboard_watcher.py # 0.5s poll
 │   ├── ui.py                # customtkinter panel (ID)
-│   └── tray.py              # pystray Buka/Keluar
+│   ├── tray.py              # pystray CM icon + Buka/Autostart/Keluar
+│   └── autostart.py         # Windows Run + settings.json (+ XDG optional)
 ├── requirements.txt
 ├── run.bat
 ├── README.md
 └── .gitignore
 ```
 
-Data file: `memos.json` under the config directory above.
+Data: `memos.json` dan `settings.json` di direktori config di atas.
 
 ---
 
@@ -104,7 +107,7 @@ pip install -r requirements.txt
 python -m clipmemo
 ```
 
-Hotkey/tray support varies by desktop environment; UI and clipboard history still work.
+Autostart di Linux memakai file XDG `~/.config/autostart/clipmemo.desktop` jika diaktifkan. Hotkey/tray support varies by desktop environment; UI and clipboard history still work.
 
 ---
 

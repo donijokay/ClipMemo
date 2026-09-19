@@ -29,17 +29,17 @@ public sealed class TrayApplicationContext : ApplicationContext
         _form.EnsureHandle(); // register Ctrl+Shift+V before first show
         _form.Hide();
 
-        _autostartItem = new ToolStripMenuItem("Autostart", null, OnToggleAutostart)
+        _autostartItem = new ToolStripMenuItem("Start with Windows", null, OnToggleAutostart)
         {
             Checked = StartupService.IsStartWithWindowsEnabled() || _settings.Autostart,
             CheckOnClick = false,
         };
 
         _menu = new ContextMenuStrip();
-        _menu.Items.Add(new ToolStripMenuItem("Buka", null, OnOpen) { Font = new Font(SystemFonts.MenuFont!, FontStyle.Bold) });
+        _menu.Items.Add(new ToolStripMenuItem("Open", null, OnOpen) { Font = new Font(SystemFonts.MenuFont!, FontStyle.Bold) });
         _menu.Items.Add(_autostartItem);
         _menu.Items.Add(new ToolStripSeparator());
-        _menu.Items.Add(new ToolStripMenuItem("Keluar", null, OnExit));
+        _menu.Items.Add(new ToolStripMenuItem("Exit", null, OnExit));
 
         _tray = new NotifyIcon
         {
@@ -55,7 +55,7 @@ public sealed class TrayApplicationContext : ApplicationContext
         try
         {
             _tray.BalloonTipTitle = "ClipMemo";
-            _tray.BalloonTipText = "Siap — Ctrl+Shift+V atau klik kanan tray → Buka.";
+            _tray.BalloonTipText = "Ready — Ctrl+Shift+V or right-click the tray → Open.";
             _tray.BalloonTipIcon = ToolTipIcon.Info;
             _tray.ShowBalloonTip(2500);
         }

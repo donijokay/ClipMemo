@@ -13,7 +13,7 @@ internal static class Program
         if (!createdNew)
         {
             MessageBox.Show(
-                "ClipMemo sudah berjalan (lihat system tray).",
+                "ClipMemo is already running (see the system tray).",
                 "ClipMemo",
                 MessageBoxButtons.OK,
                 MessageBoxIcon.Information);

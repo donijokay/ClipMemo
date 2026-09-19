@@ -4,7 +4,7 @@ using ClipMemo.Services;
 
 namespace ClipMemo.Forms;
 
-/// <summary>Dark compact clipboard history panel (Indonesian UI).</summary>
+/// <summary>Dark compact clipboard history panel.</summary>
 public sealed class MainForm : Form
 {
     private const int PanelWidth = 380;
@@ -95,7 +95,7 @@ public sealed class MainForm : Form
         _search = new TextBox
         {
             Dock = DockStyle.Fill,
-            PlaceholderText = "Cari…",
+            PlaceholderText = "Search…",
             BackColor = Color.FromArgb(45, 45, 50),
             ForeColor = Color.WhiteSmoke,
             BorderStyle = BorderStyle.FixedSingle,
@@ -136,7 +136,7 @@ public sealed class MainForm : Form
 
         _emptyLabel = new Label
         {
-            Text = "Salin teks apa saja — akan muncul di sini.",
+            Text = "Copy any text — it will show up here.",
             AutoSize = false,
             Dock = DockStyle.Fill,
             TextAlign = ContentAlignment.MiddleCenter,
@@ -158,7 +158,7 @@ public sealed class MainForm : Form
 
         var btnClear = new Button
         {
-            Text = "Bersihkan",
+            Text = "Clear",
             Size = new Size(96, 28),
             Location = new Point(12, 8),
             FlatStyle = FlatStyle.Flat,
@@ -170,7 +170,7 @@ public sealed class MainForm : Form
 
         var btnHide = new Button
         {
-            Text = "Sembunyikan",
+            Text = "Hide",
             Size = new Size(110, 28),
             Anchor = AnchorStyles.Top | AnchorStyles.Right,
             FlatStyle = FlatStyle.Flat,
@@ -281,8 +281,8 @@ public sealed class MainForm : Form
             _list.Visible = false;
             _emptyLabel.Visible = true;
             _emptyLabel.Text = string.IsNullOrEmpty(query)
-                ? "Salin teks apa saja — akan muncul di sini."
-                : "Tidak ada hasil.";
+                ? "Copy any text — it will show up here."
+                : "No results.";
             _emptyLabel.BringToFront();
         }
         else
@@ -298,7 +298,7 @@ public sealed class MainForm : Form
         }
 
         _list.ResumeLayout();
-        SetStatus($"{_store.ListMemos().Count} memo");
+        SetStatus($"{_store.ListMemos().Count} memos");
     }
 
     private Control CreateRow(Memo memo, int width)
@@ -331,19 +331,19 @@ public sealed class MainForm : Form
         lbl.Click += (_, _) => CopyMemo(memo);
         row.Click += (_, _) => CopyMemo(memo);
 
-        var btnPin = MakeIconButton(memo.Pinned ? "📌" : "○", width - 100, memo.Pinned ? "Lepas sematan" : "Semat");
+        var btnPin = MakeIconButton(memo.Pinned ? "📌" : "○", width - 100, memo.Pinned ? "Unpin" : "Pin");
         btnPin.Click += (_, _) =>
         {
             bool wasPinned = memo.Pinned;
             _store.SetPinned(memo.Id, !memo.Pinned);
             RefreshList();
-            FlashStatus(wasPinned ? "Lepas." : "Disemat.");
+            FlashStatus(wasPinned ? "Unpinned." : "Pinned.");
         };
 
         var btnEdit = MakeIconButton("✎", width - 68, "Edit");
         btnEdit.Click += (_, _) => EditMemo(memo);
 
-        var btnDel = MakeIconButton("✕", width - 36, "Hapus");
+        var btnDel = MakeIconButton("✕", width - 36, "Delete");
         btnDel.ForeColor = Color.FromArgb(224, 112, 112);
         btnDel.Click += (_, _) =>
         {
@@ -357,9 +357,9 @@ public sealed class MainForm : Form
         row.Controls.Add(btnEdit);
         row.Controls.Add(btnDel);
 
-        btnPin.MouseEnter += (_, _) => SetStatus(memo.Pinned ? "Lepas sematan" : "Semat");
+        btnPin.MouseEnter += (_, _) => SetStatus(memo.Pinned ? "Unpin" : "Pin");
         btnEdit.MouseEnter += (_, _) => SetStatus("Edit");
-        btnDel.MouseEnter += (_, _) => SetStatus("Hapus");
+        btnDel.MouseEnter += (_, _) => SetStatus("Delete");
         lbl.MouseEnter += (_, _) => SetStatus("Klik untuk salin");
 
         return row;
@@ -389,7 +389,7 @@ public sealed class MainForm : Form
         {
             Clipboard.SetText(memo.Text);
             _watcher.NotifyCopied(memo.Text);
-            FlashStatus("Disalin.");
+            FlashStatus("Copied.");
         }
         catch
         {
@@ -415,7 +415,7 @@ public sealed class MainForm : Form
     {
         int n = _store.ClearUnpinned();
         RefreshList();
-        FlashStatus(n > 0 ? $"Bersih · {n} dihapus." : "Tidak ada yang dihapus.");
+        FlashStatus(n > 0 ? $"Cleared · {n} removed." : "Nothing to clear.");
     }
 
     private void SetStatus(string msg) => _status.Text = msg;
@@ -429,7 +429,7 @@ public sealed class MainForm : Form
         _statusTimer.Tick += (_, _) =>
         {
             _statusTimer.Stop();
-            SetStatus($"{_store.ListMemos().Count} memo");
+            SetStatus($"{_store.ListMemos().Count} memos");
         };
         _statusTimer.Start();
     }

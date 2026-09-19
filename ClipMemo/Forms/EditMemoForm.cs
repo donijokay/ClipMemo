@@ -21,7 +21,7 @@ public sealed class EditMemoForm : Form
 
         var label = new Label
         {
-            Text = "Edit teks:",
+            Text = "Edit text:",
             AutoSize = true,
             Location = new Point(12, 12),
             ForeColor = Color.WhiteSmoke,
@@ -43,7 +43,7 @@ public sealed class EditMemoForm : Form
 
         var btnSave = new Button
         {
-            Text = "Simpan",
+            Text = "Save",
             DialogResult = DialogResult.OK,
             Size = new Size(88, 30),
             Anchor = AnchorStyles.Bottom | AnchorStyles.Right,
@@ -55,7 +55,7 @@ public sealed class EditMemoForm : Form
 
         var btnCancel = new Button
         {
-            Text = "Batal",
+            Text = "Cancel",
             DialogResult = DialogResult.Cancel,
             Size = new Size(88, 30),
             Anchor = AnchorStyles.Bottom | AnchorStyles.Right,

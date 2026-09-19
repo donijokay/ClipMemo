@@ -1,110 +1,136 @@
 # ClipMemo
 
-**ClipMemo** — riwayat clipboard multi-item untuk **Windows 11**, gaya Gboard. Salin teks di mana saja; ClipMemo menyimpannya otomatis agar bisa dicari, disemat, diedit, dihapus, dan disalin ulang.
+Aplikasi system-tray untuk Windows 11 yang **menyimpan riwayat clipboard multi-item** (salin teks di mana saja), lalu memudahkan **cari, semat, edit, hapus, dan salin ulang**.
 
-UI dalam **Bahasa Indonesia**. Versi **2.0.0** = aplikasi tray native **C# / WinForms** (mirip [AutoHDR](https://github.com/donijokay/AutoHDR)), bukan Python.
+System-tray app for Windows 11 that **keeps a multi-item clipboard history** (copy text anywhere), then lets you **search, pin, edit, delete, and copy again**.
 
----
+> **v2.0.0:** Native C# / WinForms tray app. Framework-dependent win-x64 build (requires .NET 8 Desktop Runtime). Hotkey **Ctrl+Shift+V**, tray icon **CM**, optional start with Windows.
 
-## Unduhan
-
-**Catatan ukuran:** build **bukan** self-contained — `ClipMemo.exe` relatif kecil, tapi PC perlu [.NET 8 Desktop Runtime](https://dotnet.microsoft.com/download/dotnet/8.0).
-
- Windows (exe)
-
-Rilis GitHub berisi **`ClipMemo.zip`** (di dalamnya `ClipMemo.exe`):
-
-1. Buka [Releases](https://github.com/donijokay/ClipMemo/releases)
-2. Unduh `ClipMemo.zip`, ekstrak, jalankan **`ClipMemo.exe`**
-3. Ikon **CM** muncul di system tray — klik kanan → **Buka**, atau tekan **Ctrl+Shift+V**
-
-Build otomatis: workflow **Build Windows exe** (`dotnet publish` self-contained win-x64 di `windows-latest`).
-
-Tidak perlu menginstal .NET Runtime (build self-contained).
+> **v2.0.0:** Aplikasi tray native C# / WinForms. Build win-x64 framework-dependent (perlu .NET 8 Desktop Runtime). Hotkey **Ctrl+Shift+V**, ikon tray **CM**, opsi mulai bersama Windows.
 
 ---
 
-## Fitur
+## Bahasa Indonesia
 
-| Fitur | Keterangan |
-|-------|------------|
-| Auto-simpan | Poll clipboard ~0.5s; lewati kosong, duplikat terakhir, dan &gt;100KB |
-| Banyak memo | Edit, pin (tersemat), hapus, cari live, klik baris = salin ulang |
-| System tray | Ikon **CM** (kotak biru); menu **Buka** / **Autostart** / **Keluar** |
-| Autostart | Tray → Autostart → `HKCU\...\Run` menunjuk ke `ClipMemo.exe` |
-| Hotkey | **Ctrl+Shift+V** (`RegisterHotKey`) tampilkan/sembunyikan panel |
-| Persistensi | `%APPDATA%\ClipMemo\memos.json` + `settings.json` |
-| Cap | Maks **100** memo tidak tersemat; yang dipin tidak pernah di-evict |
-| UI | Panel gelap ringkas ~380×500 (WinForms) |
-
----
-
-## Build dari sumber
+### Download (siap pakai)
+1. Install **.NET 8 Desktop Runtime (x64)** — wajib:  
+   https://dotnet.microsoft.com/download/dotnet/8.0  
+   Pilih **Desktop Runtime** → Windows x64.
+2. Ambil `ClipMemo.zip` dari [Releases](https://github.com/donijokay/ClipMemo/releases).
+3. Extract, jalankan `ClipMemo.exe`.
 
 ### Persyaratan
-- Windows + [.NET 8 SDK](https://dotnet.microsoft.com/download/dotnet/8.0)
+- Windows 11 (disarankan; Windows 10 mungkin berjalan)
+- [.NET 8 Desktop Runtime](https://dotnet.microsoft.com/download/dotnet/8.0) untuk menjalankan build dari Releases
+- .NET 8 SDK hanya jika kamu ingin build dari sumber
 
-### Debug
+### Build
 ```bat
 cd ClipMemo
 dotnet restore
 dotnet build -c Release
-dotnet run --project ClipMemo\ClipMemo.csproj
 ```
 
-### Publish (single-file, win-x64)
+### Publish (single-file, win-x64, framework-dependent)
 Jalankan `publish.bat`, atau:
-
 ```bat
-dotnet publish ClipMemo\ClipMemo.csproj -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -o publish\win-x64
+dotnet publish ClipMemo\ClipMemo.csproj -c Release -r win-x64 --self-contained false -p:PublishSingleFile=true -o publish\win-x64
+```
+Output: `publish\win-x64\ClipMemo.exe`  
+(PC target tetap perlu .NET 8 Desktop Runtime.)
+
+### Penggunaan
+1. Jalankan `ClipMemo.exe` — ikon **CM** muncul di system tray.
+2. Salin teks di mana saja (Ctrl+C) — memo baru muncul di daftar.
+3. **Ctrl+Shift+V** atau menu tray **Buka** — tampilkan panel.
+4. Menu tray:
+   - **Buka** — panel utama
+   - **Mulai bersama Windows** — autostart (HKCU Run)
+   - **Keluar**
+5. Di panel: klik baris = salin ulang; Semat / Edit / Hapus; kolom cari; Bersihkan (hapus yang tidak tersemat).
+6. Data disimpan di `%AppData%\ClipMemo\`.
+
+### Konfigurasi
+Folder: `%AppData%\ClipMemo\`  
+(`Environment.SpecialFolder.ApplicationData` → biasanya `C:\Users\<user>\AppData\Roaming\ClipMemo\`)
+
+| File | Isi |
+|------|-----|
+| `memos.json` | Riwayat memo (teks, pin, timestamp) |
+| `settings.json` | Pengaturan (mis. autostart) |
+
+| Batas | Nilai |
+|--------|------|
+| Memo tidak tersemat | maks. 100 (yang dipin tidak dihapus otomatis) |
+| Ukuran teks | lewati salinan &gt; ~100 KB |
+| Hotkey default | Ctrl+Shift+V |
+
+### Catatan
+- Hanya teks (clipboard format teks); gambar belum didukung di v2.0.0.
+- Tutup jendela = sembunyi ke tray (bukan keluar). Keluar lewat menu tray.
+- Build Releases **bukan** self-contained agar ukuran kecil.
+
+---
+
+## English
+
+### Download (ready to run)
+1. Install **.NET 8 Desktop Runtime (x64)** first:  
+   https://dotnet.microsoft.com/download/dotnet/8.0  
+   Choose **Desktop Runtime** → Windows x64.
+2. Get `ClipMemo.zip` from [Releases](https://github.com/donijokay/ClipMemo/releases).
+3. Extract and run `ClipMemo.exe`.
+
+### Requirements
+- Windows 11 (recommended; Windows 10 may work)
+- [.NET 8 Desktop Runtime](https://dotnet.microsoft.com/download/dotnet/8.0) to run the Releases build
+- .NET 8 SDK only if you build from source
+
+### Build
+```bat
+cd ClipMemo
+dotnet restore
+dotnet build -c Release
 ```
 
-Output: `publish\win-x64\ClipMemo.exe`
-
----
-
-## Penggunaan
-
-1. Salin teks (Ctrl+C) — memo baru muncul di daftar.
-2. Buka panel: **Ctrl+Shift+V** atau tray **CM** → **Buka**.
-3. **Klik** baris → teks disalin kembali (“Disalin.”).
-4. Tombol baris: **📌** semat/lepas · **✎** edit · **✕** hapus.
-5. Kolom **Cari…** untuk filter.
-6. **Bersihkan** — hapus semua memo yang tidak tersemat.
-7. **Sembunyikan** / tutup jendela — app tetap di tray. **Keluar** dari tray untuk stop.
-
----
-
-## Struktur proyek
-
+### Publish (single-file, win-x64, framework-dependent)
+Run `publish.bat`, or:
+```bat
+dotnet publish ClipMemo\ClipMemo.csproj -c Release -r win-x64 --self-contained false -p:PublishSingleFile=true -o publish\win-x64
 ```
-ClipMemo/
-├── ClipMemo.sln
-├── ClipMemo/
-│   ├── ClipMemo.csproj
-│   ├── Program.cs
-│   ├── AppIcon.cs
-│   ├── app.manifest
-│   ├── Assets/clipmemo.ico|png
-│   ├── Forms/   TrayApplicationContext, MainForm, EditMemoForm
-│   ├── Models/  Memo, AppSettings
-│   ├── Services/ ClipboardWatcher, MemoStore, StartupService, HotkeyService, SettingsService
-│   └── Native/  NativeMethods.cs
-├── publish.bat
-├── LICENSE
-└── README.md
-```
+Output: `publish\win-x64\ClipMemo.exe`  
+(Target PCs still need the .NET 8 Desktop Runtime.)
 
-Data runtime: `%APPDATA%\ClipMemo\`.
+### Usage
+1. Run `ClipMemo.exe` — a **CM** icon appears in the system tray.
+2. Copy text anywhere (Ctrl+C) — new memos appear in the list.
+3. **Ctrl+Shift+V** or tray **Open** — show the panel.
+4. Tray menu: Open, Start with Windows, Exit.
+5. In the panel: click a row to copy again; Pin / Edit / Delete; search; Clear unpinned.
+6. Data lives under `%AppData%\ClipMemo\`.
+
+### Configuration
+Path: `%AppData%\ClipMemo\`  
+(Resolved via `Environment.SpecialFolder.ApplicationData`.)
+
+| File | Contents |
+|------|----------|
+| `memos.json` | Memo history (text, pin, timestamps) |
+| `settings.json` | Settings (e.g. autostart) |
+
+| Limit | Value |
+|--------|------|
+| Unpinned memos | max 100 (pinned are never auto-evicted) |
+| Text size | skips pastes larger than ~100 KB |
+| Default hotkey | Ctrl+Shift+V |
+
+### Notes
+- Text clipboard only in v2.0.0 (images not supported yet).
+- Closing the window hides to the tray; use tray Exit to quit.
+- Release builds are **not** self-contained so the download stays small.
 
 ---
 
-## Privasi
+## License
 
-Semua memo hanya di komputer Anda. Tidak ada upload atau telemetri.
-
----
-
-## Lisensi
-
-MIT License — lihat [`LICENSE`](LICENSE). Copyright (c) 2026 donijokay.
+MIT — see [`LICENSE`](LICENSE).

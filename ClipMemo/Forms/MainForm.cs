@@ -38,13 +38,13 @@ public sealed class MainForm : Form
         _onCloseRequest = onCloseRequest;
 
         Text = "ClipMemo";
-        FormBorderStyle = FormBorderStyle.FixedSingle;
-        MaximizeBox = false;
+        FormBorderStyle = FormBorderStyle.Sizable;
+        MaximizeBox = true;
         MinimizeBox = false;
         ShowInTaskbar = false;
         StartPosition = FormStartPosition.Manual;
         Size = new Size(PanelWidth, PanelHeight);
-        MinimumSize = new Size(PanelWidth, 360);
+        MinimumSize = new Size(320, 360);
         BackColor = Color.FromArgb(28, 28, 32);
         ForeColor = Color.WhiteSmoke;
         Font = new Font("Segoe UI", 9f);
@@ -106,12 +106,19 @@ public sealed class MainForm : Form
             AutoSize = true,
             ForeColor = Color.Gray,
             Font = new Font("Segoe UI", 8.5f),
+            Anchor = AnchorStyles.Top | AnchorStyles.Right,
         };
-        _hotkeyHint.Location = new Point(PanelWidth - 130, 12);
+        _hotkeyHint.Location = new Point(header.ClientSize.Width - 12 - 110, 12);
 
         header.Controls.Add(badge);
         header.Controls.Add(title);
         header.Controls.Add(_hotkeyHint!);
+        header.Resize += (_, _) =>
+        {
+            if (_hotkeyHint is null) return;
+            _hotkeyHint.Location = new Point(
+                Math.Max(120, header.ClientSize.Width - 12 - _hotkeyHint.Width), 12);
+        };
 
         // Search
         var searchHost = new Panel
@@ -227,6 +234,26 @@ public sealed class MainForm : Form
 
         HandleCreated += OnHandleCreated;
         FormClosing += OnFormClosing;
+        // Relayout memo rows when the window is resized so text width follows
+        var resizeTimer = new System.Windows.Forms.Timer { Interval = 80 };
+        resizeTimer.Tick += (_, _) =>
+        {
+            resizeTimer.Stop();
+            if (IsDisposed || !IsHandleCreated) return;
+            RefreshList();
+            UpdateHotkeyHint();
+        };
+        Resize += (_, _) =>
+        {
+            if (_hotkeyHint is not null && _hotkeyHint.Parent is not null)
+            {
+                var hdr = _hotkeyHint.Parent;
+                _hotkeyHint.Location = new Point(
+                    Math.Max(120, hdr.ClientSize.Width - 12 - _hotkeyHint.Width), 12);
+            }
+            resizeTimer.Stop();
+            resizeTimer.Start();
+        };
         PositionNearTray();
         RefreshList();
     }

@@ -15,39 +15,26 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - uses: actions/setup-python@v5
+      - name: Setup .NET 8
+        uses: actions/setup-dotnet@v4
         with:
-          python-version: "3.12"
+          dotnet-version: "8.0.x"
 
-      - name: Install dependencies
-        run: |
-          python -m pip install --upgrade pip
-          pip install -r requirements.txt pyinstaller
-
-      - name: Build ClipMemo.exe
-        run: |
-          pyinstaller `
-            --noconfirm `
-            --clean `
-            --windowed `
-            --onefile `
-            --name ClipMemo `
-            --hidden-import customtkinter `
-            --hidden-import pystray `
-            --hidden-import PIL `
-            --hidden-import PIL._tkinter_finder `
-            --hidden-import pyperclip `
-            --hidden-import pynput `
-            --hidden-import keyboard `
-            --collect-all customtkinter `
-            --collect-all pystray `
-            clipmemo_app.py
+      - name: Publish ClipMemo (win-x64 self-contained)
+        run: >
+          dotnet publish ClipMemo/ClipMemo.csproj
+          -c Release
+          -r win-x64
+          --self-contained true
+          -p:PublishSingleFile=true
+          -p:IncludeNativeLibrariesForSelfExtract=true
+          -o publish
 
       - name: Pack zip like AutoHDR
         shell: pwsh
         run: |
           New-Item -ItemType Directory -Force -Path dist/ClipMemo-win | Out-Null
-          Copy-Item dist/ClipMemo.exe dist/ClipMemo-win/ClipMemo.exe
+          Copy-Item publish/ClipMemo.exe dist/ClipMemo-win/ClipMemo.exe
           Copy-Item README.md dist/ClipMemo-win/README.md
           Copy-Item LICENSE dist/ClipMemo-win/LICENSE
           Compress-Archive -Path dist/ClipMemo-win/* -DestinationPath dist/ClipMemo.zip -Force
@@ -58,7 +45,7 @@ jobs:
           name: ClipMemo-windows
           path: dist/ClipMemo.zip
 
-      - name: Attach to GitHub Release
+      - name: Attach to GitHub Release (tag)
         if: startsWith(github.ref, 'refs/tags/')
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -69,10 +56,11 @@ jobs:
         if: github.event_name == 'workflow_dispatch'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        shell: pwsh
         run: |
           $tag = gh release list --limit 1 --json tagName -q '.[0].tagName'
           if ($tag) {
             gh release upload $tag dist/ClipMemo.zip --clobber
           } else {
-            gh release create v1.0.1 dist/ClipMemo.zip --title "ClipMemo v1.0.1" --notes "Windows exe build (ClipMemo.zip)."
+            gh release create v2.0.0 dist/ClipMemo.zip --title "ClipMemo v2.0.0" --notes "Native C# Windows tray app (ClipMemo.zip / ClipMemo.exe)."
           }

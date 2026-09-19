@@ -1,84 +1,73 @@
 # ClipMemo
 
-**ClipMemo** is a multi-item clipboard history app for Windows 11 (also runs on Linux), inspired by Gboard’s clipboard sheet. Copy text anywhere — ClipMemo auto-saves it so you can search, pin, edit, delete, and re-copy later.
+**ClipMemo** — riwayat clipboard multi-item untuk **Windows 11**, gaya Gboard. Salin teks di mana saja; ClipMemo menyimpannya otomatis agar bisa dicari, disemat, diedit, dihapus, dan disalin ulang.
 
-UI strings are in **Indonesian**. This README is bilingual.
+UI dalam **Bahasa Indonesia**. Versi **2.0.0** = aplikasi tray native **C# / WinForms** (mirip [AutoHDR](https://github.com/donijokay/AutoHDR)), bukan Python.
 
 ---
-
 
 ## Unduhan Windows (exe)
 
-Rilis GitHub menyertakan **`ClipMemo.zip`** (berisi `ClipMemo.exe`), mirip AutoHDR:
+Rilis GitHub berisi **`ClipMemo.zip`** (di dalamnya `ClipMemo.exe`):
 
 1. Buka [Releases](https://github.com/donijokay/ClipMemo/releases)
-2. Unduh `ClipMemo.zip`, ekstrak, jalankan `ClipMemo.exe`
+2. Unduh `ClipMemo.zip`, ekstrak, jalankan **`ClipMemo.exe`**
+3. Ikon **CM** muncul di system tray — klik kanan → **Buka**, atau tekan **Ctrl+Shift+V**
 
-Build otomatis: workflow **Build Windows exe** (PyInstaller di `windows-latest`).
+Build otomatis: workflow **Build Windows exe** (`dotnet publish` self-contained win-x64 di `windows-latest`).
 
-## Fitur / Features
-
-| Fitur | Description |
-|-------|-------------|
-| Auto-simpan | Polls clipboard ~every 0.5s; skips empty, duplicate-of-last, and >100KB |
-| Banyak memo | Edit, pin (tersemat), hapus, cari live, klik untuk salin ulang |
-| System tray | Ikon **CM** (badge biru); menu **Buka** / **Autostart** / **Keluar** |
-| Autostart | Toggle di UI (“Mulai otomatis saat Windows nyala”) atau tray — daftar di Run registry (Windows) |
-| Hotkey | **Ctrl+Shift+V** (keyboard on Windows; pynput fallback; degrades if unavailable) |
-| Persistensi | `%APPDATA%\ClipMemo\` (Windows) · `~/.config/ClipMemo` (Linux) |
-| Cap | Max **100** unpinned memos; pinned are never dropped |
-| UI | Dark compact ~380×500 panel (customtkinter), minimal Indonesia |
+Tidak perlu menginstal .NET Runtime (build self-contained).
 
 ---
 
-## Persyaratan / Requirements
+## Fitur
 
-- Python **3.9+**
-- Windows 11 recommended (Linux OK for development)
-- Dependencies in `requirements.txt`:
-  - `customtkinter`, `pystray`, `Pillow`, `pyperclip`
-  - `keyboard` (Windows) and/or `pynput` for global hotkey
-
-On Windows, tray/hotkey may need the app (or terminal) run **as Administrator** once if the hotkey library requires elevated hooks — usually normal user rights are enough.
+| Fitur | Keterangan |
+|-------|------------|
+| Auto-simpan | Poll clipboard ~0.5s; lewati kosong, duplikat terakhir, dan &gt;100KB |
+| Banyak memo | Edit, pin (tersemat), hapus, cari live, klik baris = salin ulang |
+| System tray | Ikon **CM** (kotak biru); menu **Buka** / **Autostart** / **Keluar** |
+| Autostart | Tray → Autostart → `HKCU\...\Run` menunjuk ke `ClipMemo.exe` |
+| Hotkey | **Ctrl+Shift+V** (`RegisterHotKey`) tampilkan/sembunyikan panel |
+| Persistensi | `%APPDATA%\ClipMemo\memos.json` + `settings.json` |
+| Cap | Maks **100** memo tidak tersemat; yang dipin tidak pernah di-evict |
+| UI | Panel gelap ringkas ~380×500 (WinForms) |
 
 ---
 
-## Instalasi Windows 11
+## Build dari sumber
 
-1. Install [Python 3](https://www.python.org/downloads/) and tick **Add Python to PATH**.
-2. Open **Command Prompt** or PowerShell in this folder:
+### Persyaratan
+- Windows + [.NET 8 SDK](https://dotnet.microsoft.com/download/dotnet/8.0)
 
+### Debug
 ```bat
-cd path\to\ClipMemo
-python -m venv .venv
-.venv\Scripts\activate
-pip install -r requirements.txt
+cd ClipMemo
+dotnet restore
+dotnet build -c Release
+dotnet run --project ClipMemo\ClipMemo.csproj
 ```
 
-3. Run:
+### Publish (single-file, win-x64)
+Jalankan `publish.bat`, atau:
 
 ```bat
-python -m clipmemo
+dotnet publish ClipMemo\ClipMemo.csproj -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -o publish\win-x64
 ```
 
-Or double-click **`run.bat`** (uses system `python`).
-
-4. **Autostart** — di panel, centang **Mulai otomatis saat Windows nyala**, atau klik kanan ikon tray → **Autostart**.  
-   ClipMemo menulis `%APPDATA%\ClipMemo\start_clipmemo.cmd` dan mendaftarkannya di  
-   `HKCU\Software\Microsoft\Windows\CurrentVersion\Run` (nama nilai `ClipMemo`).  
-   Preferensi juga disimpan di `settings.json`.
+Output: `publish\win-x64\ClipMemo.exe`
 
 ---
 
-## Penggunaan / Usage
+## Penggunaan
 
-1. Salin teks di mana saja (Ctrl+C) — memo baru muncul di daftar.
-2. Buka panel dengan **Ctrl+Shift+V** atau klik kanan ikon tray **CM** → **Buka**.
-3. **Klik** baris memo → teks disalin kembali ke clipboard (“Disalin.”).
-4. Tombol baris: **📌** semat/lepas · **✎** edit · **✕** hapus (hint di status saat hover).
-5. Ketik di kolom **Cari…** untuk filter live.
+1. Salin teks (Ctrl+C) — memo baru muncul di daftar.
+2. Buka panel: **Ctrl+Shift+V** atau tray **CM** → **Buka**.
+3. **Klik** baris → teks disalin kembali (“Disalin.”).
+4. Tombol baris: **📌** semat/lepas · **✎** edit · **✕** hapus.
+5. Kolom **Cari…** untuk filter.
 6. **Bersihkan** — hapus semua memo yang tidak tersemat.
-7. **Sembunyikan** / tutup jendela — app tetap di tray. **Keluar** dari tray untuk stop penuh.
+7. **Sembunyikan** / tutup jendela — app tetap di tray. **Keluar** dari tray untuk stop.
 
 ---
 
@@ -86,48 +75,32 @@ Or double-click **`run.bat`** (uses system `python`).
 
 ```
 ClipMemo/
-├── clipmemo/
-│   ├── __init__.py
-│   ├── __main__.py
-│   ├── main.py              # App wiring, hotkey, shutdown
-│   ├── storage.py           # JSON persistence + pin/cap
-│   ├── clipboard_watcher.py # 0.5s poll
-│   ├── ui.py                # customtkinter panel (ID)
-│   ├── tray.py              # pystray CM icon + Buka/Autostart/Keluar
-│   └── autostart.py         # Windows Run + settings.json (+ XDG optional)
-├── requirements.txt
-├── run.bat
-├── README.md
-└── .gitignore
+├── ClipMemo.sln
+├── ClipMemo/
+│   ├── ClipMemo.csproj
+│   ├── Program.cs
+│   ├── AppIcon.cs
+│   ├── app.manifest
+│   ├── Assets/clipmemo.ico|png
+│   ├── Forms/   TrayApplicationContext, MainForm, EditMemoForm
+│   ├── Models/  Memo, AppSettings
+│   ├── Services/ ClipboardWatcher, MemoStore, StartupService, HotkeyService, SettingsService
+│   └── Native/  NativeMethods.cs
+├── publish.bat
+├── LICENSE
+└── README.md
 ```
 
-Data: `memos.json` dan `settings.json` di direktori config di atas.
+Data runtime: `%APPDATA%\ClipMemo\`.
 
 ---
 
-## Linux (dev)
+## Privasi
 
-```bash
-cd ClipMemo
-python3 -m venv .venv
-source .venv/bin/activate
-pip install -r requirements.txt
-# On Linux, install a tkinter package if needed, e.g.:
-#   sudo apt install python3-tk
-python -m clipmemo
-```
-
-Autostart di Linux memakai file XDG `~/.config/autostart/clipmemo.desktop` jika diaktifkan. Hotkey/tray support varies by desktop environment; UI and clipboard history still work.
+Semua memo hanya di komputer Anda. Tidak ada upload atau telemetri.
 
 ---
 
-## Privasi / Privacy
+## Lisensi
 
-Semua memo disimpan **hanya di komputer Anda** (`%APPDATA%\\ClipMemo`). Tidak ada upload atau telemetri.
-
----
-
-## Lisensi / License
-
-MIT License — lihat [`LICENSE`](LICENSE).
-
+MIT License — lihat [`LICENSE`](LICENSE). Copyright (c) 2026 donijokay.

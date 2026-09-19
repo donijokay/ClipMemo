@@ -9,7 +9,6 @@ public sealed class MainForm : Form
 {
     private const int PanelWidth = 380;
     private const int PanelHeight = 500;
-    private const int PreviewLen = 100;
 
     private readonly MemoStore _store;
     private readonly ClipboardWatcher _watcher;
@@ -371,36 +370,22 @@ public sealed class MainForm : Form
             Tag = memo,
         };
 
+        // One-line preview; AutoEllipsis shows "…" only when the label actually clips
         string flat = memo.Text.Replace('\n', ' ').Replace('\r', ' ').Trim();
-        bool truncated = flat.Length > PreviewLen
-            || memo.Text.IndexOf('\n') >= 0
-            || memo.Text.IndexOf('\r') >= 0;
-        string preview = flat.Length > PreviewLen
-            ? flat[..(PreviewLen - 1)] + "…"
-            : flat;
 
         var lbl = new Label
         {
-            Text = preview,
+            Text = flat,
             AutoSize = false,
+            AutoEllipsis = true,
             Location = new Point(10, 6),
             Size = new Size(width - 118, rowH - 12),
             TextAlign = ContentAlignment.MiddleLeft,
             ForeColor = Color.WhiteSmoke,
             Cursor = Cursors.Hand,
             Tag = memo,
-            // Slightly larger type + padding so a full line is easy to read
             Font = new Font("Segoe UI", 9.5f),
         };
-
-        // Also treat as truncated if the full one-line text is wider than the label
-        if (!truncated && flat.Length > 0)
-        {
-            int textW = TextRenderer.MeasureText(flat, lbl.Font, Size.Empty,
-                TextFormatFlags.SingleLine | TextFormatFlags.NoPadding).Width;
-            if (textW > lbl.Width)
-                truncated = true;
-        }
         lbl.Click += (_, _) => CopyMemo(memo);
         row.Click += (_, _) => CopyMemo(memo);
 
@@ -440,8 +425,8 @@ public sealed class MainForm : Form
             lbl.BackColor = on ? hoverBg : normalBg;
             if (on)
             {
-                // Full-text panel only when the row text is truncated / too long
-                if (truncated)
+                // Full-text panel ONLY when the label is actually ellipsized (clipped)
+                if (IsLabelTextClipped(lbl))
                     ShowFullPreview(row, memo.Text);
                 else
                     HideFullPreviewIfOwner(row);

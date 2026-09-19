@@ -332,11 +332,15 @@ public sealed class MainForm : Form
 
     private Control CreateRow(Memo memo, int width)
     {
+        const int rowH = 58;
+        const int btnY = 15; // vertically center 28px buttons in 58px row
+
         var row = new Panel
         {
             Width = width,
-            Height = 36,
-            Margin = new Padding(2),
+            Height = rowH,
+            Margin = new Padding(2, 3, 2, 3),
+            Padding = new Padding(4, 6, 4, 6),
             BackColor = Color.FromArgb(48, 48, 54),
             Cursor = Cursors.Hand,
             Tag = memo,
@@ -350,17 +354,19 @@ public sealed class MainForm : Form
         {
             Text = preview,
             AutoSize = false,
-            Location = new Point(8, 0),
-            Size = new Size(width - 110, 36),
+            Location = new Point(10, 6),
+            Size = new Size(width - 118, rowH - 12),
             TextAlign = ContentAlignment.MiddleLeft,
             ForeColor = Color.WhiteSmoke,
             Cursor = Cursors.Hand,
             Tag = memo,
+            // Slightly larger type + padding so a full line is easy to read
+            Font = new Font("Segoe UI", 9.5f),
         };
         lbl.Click += (_, _) => CopyMemo(memo);
         row.Click += (_, _) => CopyMemo(memo);
 
-        var btnPin = MakeIconButton(memo.Pinned ? "📌" : "○", width - 100, memo.Pinned ? "Unpin" : "Pin");
+        var btnPin = MakeIconButton(memo.Pinned ? "📌" : "○", width - 100, btnY, memo.Pinned ? "Unpin" : "Pin");
         btnPin.Click += (_, _) =>
         {
             bool wasPinned = memo.Pinned;
@@ -369,10 +375,10 @@ public sealed class MainForm : Form
             FlashStatus(wasPinned ? "Unpinned." : "Pinned.");
         };
 
-        var btnEdit = MakeIconButton("✎", width - 68, "Edit");
+        var btnEdit = MakeIconButton("✎", width - 68, btnY, "Edit");
         btnEdit.Click += (_, _) => EditMemo(memo);
 
-        var btnDel = MakeIconButton("✕", width - 36, "Delete");
+        var btnDel = MakeIconButton("✕", width - 36, btnY, "Delete");
         btnDel.ForeColor = Color.FromArgb(224, 112, 112);
         btnDel.Click += (_, _) =>
         {
@@ -394,13 +400,13 @@ public sealed class MainForm : Form
         return row;
     }
 
-    private static Button MakeIconButton(string text, int x, string tip)
+    private static Button MakeIconButton(string text, int x, int y, string tip)
     {
         var b = new Button
         {
             Text = text,
             Size = new Size(28, 28),
-            Location = new Point(x, 4),
+            Location = new Point(x, y),
             FlatStyle = FlatStyle.Flat,
             BackColor = Color.Transparent,
             ForeColor = Color.WhiteSmoke,

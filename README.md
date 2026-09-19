@@ -44,6 +44,7 @@ Output: `publish\win-x64\ClipMemo.exe`
 2. Salin teks di mana saja (Ctrl+C) — memo baru muncul di daftar.
 3. **Ctrl+Shift+V** atau menu tray **Buka** — tampilkan panel.
 4. Menu tray:
+   - **Settings…** — ubah shortcut global dan Start with Windows
    - **Buka** — panel utama
    - **Mulai bersama Windows** — autostart (HKCU Run)
    - **Keluar**
@@ -105,7 +106,7 @@ Output: `publish\win-x64\ClipMemo.exe`
 1. Run `ClipMemo.exe` — a **CM** icon appears in the system tray.
 2. Copy text anywhere (Ctrl+C) — new memos appear in the list.
 3. **Ctrl+Shift+V** or tray **Open** — show the panel.
-4. Tray menu: Open, Start with Windows, Exit.
+4. Tray menu: Open, Settings… (change shortcut), Start with Windows, Exit.
 5. In the panel: click a row to copy again; Pin / Edit / Delete; search; Clear unpinned.
 6. Data lives under `%AppData%\ClipMemo\`.
 

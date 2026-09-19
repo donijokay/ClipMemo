@@ -26,7 +26,8 @@ public sealed class TrayApplicationContext : ApplicationContext
 
         _watcher = new ClipboardWatcher(OnNewClipboardText);
         _form = new MainForm(_store, _watcher);
-        _form.EnsureHandle(); // register Ctrl+Shift+V before first show
+        _form.EnsureHandle();
+        _form.ApplyHotkey(_settings.HotkeyModifiers, _settings.HotkeyVk);
         _form.Hide();
 
         _autostartItem = new ToolStripMenuItem("Start with Windows", null, OnToggleAutostart)
@@ -37,6 +38,7 @@ public sealed class TrayApplicationContext : ApplicationContext
 
         _menu = new ContextMenuStrip();
         _menu.Items.Add(new ToolStripMenuItem("Open", null, OnOpen) { Font = new Font(SystemFonts.MenuFont!, FontStyle.Bold) });
+        _menu.Items.Add(new ToolStripMenuItem("Settings…", null, OnSettings));
         _menu.Items.Add(_autostartItem);
         _menu.Items.Add(new ToolStripSeparator());
         _menu.Items.Add(new ToolStripMenuItem("Exit", null, OnExit));
@@ -55,7 +57,7 @@ public sealed class TrayApplicationContext : ApplicationContext
         try
         {
             _tray.BalloonTipTitle = "ClipMemo";
-            _tray.BalloonTipText = "Ready — Ctrl+Shift+V or right-click the tray → Open.";
+            _tray.BalloonTipText = "Ready — " + HotkeyFormatter.Format(_settings.HotkeyModifiers, _settings.HotkeyVk) + " or right-click the tray → Open.";
             _tray.BalloonTipIcon = ToolTipIcon.Info;
             _tray.ShowBalloonTip(2500);
         }

@@ -15,6 +15,9 @@ public sealed class MainForm : Form
     private readonly ClipboardWatcher _watcher;
     private readonly Action? _onCloseRequest;
     private HotkeyService? _hotkey;
+    private int _hotkeyMods;
+    private int _hotkeyVk;
+    private Label? _hotkeyHint;
     private bool _allowClose;
 
     private readonly TextBox _search;
@@ -26,6 +29,8 @@ public sealed class MainForm : Form
 
     public MainForm(MemoStore store, ClipboardWatcher watcher, Action? onCloseRequest = null)
     {
+        _hotkeyMods = NativeMethods.MOD_CONTROL | NativeMethods.MOD_SHIFT;
+        _hotkeyVk = 0x56;
         _store = store;
         _watcher = watcher;
         _onCloseRequest = onCloseRequest;
@@ -72,9 +77,9 @@ public sealed class MainForm : Form
             ForeColor = Color.White,
         };
 
-        var hotkeyHint = new Label
+        var hotkeyHint = _hotkeyHint = new Label
         {
-            Text = "Ctrl+Shift+V",
+            Text = "Ctrl+Shift+V"  // updated by UpdateHotkeyHint,
             AutoSize = true,
             ForeColor = Color.Gray,
             Font = new Font("Segoe UI", 8.5f),
@@ -208,10 +213,34 @@ public sealed class MainForm : Form
 
     private void OnHandleCreated(object? sender, EventArgs e)
     {
+        ApplyHotkey(_hotkeyMods != 0 ? _hotkeyMods : (NativeMethods.MOD_CONTROL | NativeMethods.MOD_SHIFT),
+            _hotkeyVk != 0 ? _hotkeyVk : 0x56);
+    }
+
+    /// <summary>Register or re-register the global shortcut.</summary>
+    public bool ApplyHotkey(int modifiers, int vk)
+    {
+        _hotkeyMods = modifiers;
+        _hotkeyVk = vk;
+        if (!IsHandleCreated)
+        {
+            EnsureHandle();
+        }
         _hotkey?.Dispose();
         _hotkey = new HotkeyService(Handle);
-        uint mods = (uint)(NativeMethods.MOD_CONTROL | NativeMethods.MOD_SHIFT);
-        _hotkey.Register(mods, 0x56); // V
+        bool ok = _hotkey.Register((uint)modifiers, (uint)vk);
+        UpdateHotkeyHint();
+        return ok;
+    }
+
+    public void UpdateHotkeyHint()
+    {
+        string text = HotkeyFormatter.Format(
+            _hotkeyMods != 0 ? _hotkeyMods : (NativeMethods.MOD_CONTROL | NativeMethods.MOD_SHIFT),
+            _hotkeyVk != 0 ? _hotkeyVk : 0x56);
+        if (_hotkeyHint is not null)
+            _hotkeyHint.Text = text;
+        // also update any header label named similarly
     }
 
     public void ForceClose()

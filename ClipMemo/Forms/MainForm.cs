@@ -26,7 +26,9 @@ public sealed class MainForm : Form
     private readonly FlowLayoutPanel _list;
     private readonly Label _emptyLabel;
     private System.Windows.Forms.Timer? _statusTimer;
-    private readonly ToolTip _rowTip;
+    private readonly Panel _fullPreview;
+    private readonly Label _fullPreviewLabel;
+    private Control? _previewOwner;
 
     public MainForm(MemoStore store, ClipboardWatcher watcher, Action? onCloseRequest = null)
     {
@@ -49,14 +51,25 @@ public sealed class MainForm : Form
         Font = new Font("Segoe UI", 9f);
         Icon = AppIcon.Load();
 
-        _rowTip = new ToolTip
+        _fullPreviewLabel = new Label
         {
-            AutoPopDelay = 15000,
-            InitialDelay = 400,
-            ReshowDelay = 200,
-            ShowAlways = true,
-            IsBalloon = false,
+            Dock = DockStyle.Fill,
+            AutoSize = false,
+            Padding = new Padding(10, 8, 10, 8),
+            ForeColor = Color.White,
+            BackColor = Color.FromArgb(40, 52, 72),
+            Font = new Font("Segoe UI", 9.25f),
+            TextAlign = ContentAlignment.TopLeft,
         };
+        _fullPreview = new Panel
+        {
+            Visible = false,
+            BackColor = Color.FromArgb(40, 52, 72),
+            Padding = new Padding(1),
+            BorderStyle = BorderStyle.FixedSingle,
+        };
+        _fullPreview.Controls.Add(_fullPreviewLabel);
+        Controls.Add(_fullPreview);
 
         // Header
         var header = new Panel
@@ -309,6 +322,8 @@ public sealed class MainForm : Form
 
     public void RefreshList()
     {
+        _fullPreview.Visible = false;
+        _previewOwner = null;
         string query = _search.Text.Trim();
         var memos = _store.ListMemos(query);
 
@@ -402,18 +417,18 @@ public sealed class MainForm : Form
         row.Controls.Add(btnEdit);
         row.Controls.Add(btnDel);
 
-        // Full-text tooltip + soft hover highlight on the whole row
-        string tipText = memo.Text.Length > 2000 ? memo.Text[..2000] + "…" : memo.Text;
-        _rowTip.SetToolTip(row, tipText);
-        _rowTip.SetToolTip(lbl, tipText);
-
+        // Soft hover highlight + in-app full-text preview (WinForms ToolTip often fails on tray forms)
         Color normalBg = Color.FromArgb(48, 48, 54);
-        Color hoverBg = Color.FromArgb(62, 78, 104); // soft blue-grey highlight
+        Color hoverBg = Color.FromArgb(62, 78, 104);
 
         void SetHover(bool on)
         {
             row.BackColor = on ? hoverBg : normalBg;
             lbl.BackColor = on ? hoverBg : normalBg;
+            if (on)
+                ShowFullPreview(row, memo.Text);
+            else
+                HideFullPreviewIfOwner(row);
         }
 
         void WireHover(Control c)
@@ -421,7 +436,6 @@ public sealed class MainForm : Form
             c.MouseEnter += (_, _) => SetHover(true);
             c.MouseLeave += (_, _) =>
             {
-                // Keep highlight if pointer moved onto another child of this row
                 var pt = row.PointToClient(Cursor.Position);
                 if (!row.ClientRectangle.Contains(pt))
                     SetHover(false);
@@ -440,6 +454,45 @@ public sealed class MainForm : Form
         lbl.MouseEnter += (_, _) => SetStatus("Click to copy");
 
         return row;
+    }
+
+    private void ShowFullPreview(Control owner, string text)
+    {
+        _previewOwner = owner;
+        string body = string.IsNullOrWhiteSpace(text) ? "(empty)" : text;
+        if (body.Length > 4000)
+            body = body[..4000] + "…";
+
+        _fullPreviewLabel.Text = body;
+
+        int maxW = Math.Max(220, ClientSize.Width - 24);
+        var measured = TextRenderer.MeasureText(
+            body,
+            _fullPreviewLabel.Font,
+            new Size(maxW - 24, 0),
+            TextFormatFlags.WordBreak | TextFormatFlags.TextBoxControl);
+        int h = Math.Min(220, Math.Max(40, measured.Height + 20));
+        int w = Math.Min(maxW, Math.Max(200, measured.Width + 28));
+        _fullPreview.Size = new Size(w, h);
+
+        Point below = owner.PointToScreen(new Point(0, owner.Height + 2));
+        Point local = PointToClient(below);
+        int x = Math.Max(8, Math.Min(local.X, ClientSize.Width - _fullPreview.Width - 8));
+        int y = local.Y;
+        if (y + _fullPreview.Height > ClientSize.Height - 8)
+            y = Math.Max(8, PointToClient(owner.PointToScreen(Point.Empty)).Y - _fullPreview.Height - 2);
+        _fullPreview.Location = new Point(x, y);
+        _fullPreview.Visible = true;
+        _fullPreview.BringToFront();
+    }
+
+    private void HideFullPreviewIfOwner(Control owner)
+    {
+        if (_previewOwner == owner)
+        {
+            _fullPreview.Visible = false;
+            _previewOwner = null;
+        }
     }
 
     private static Button MakeIconButton(string text, int x, int y, string tip)
@@ -524,7 +577,6 @@ public sealed class MainForm : Form
         {
             _hotkey?.Dispose();
             _statusTimer?.Dispose();
-            _rowTip.Dispose();
         }
         base.Dispose(disposing);
     }

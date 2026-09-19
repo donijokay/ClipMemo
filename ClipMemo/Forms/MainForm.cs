@@ -26,6 +26,7 @@ public sealed class MainForm : Form
     private readonly FlowLayoutPanel _list;
     private readonly Label _emptyLabel;
     private System.Windows.Forms.Timer? _statusTimer;
+    private readonly ToolTip _rowTip;
 
     public MainForm(MemoStore store, ClipboardWatcher watcher, Action? onCloseRequest = null)
     {
@@ -47,6 +48,15 @@ public sealed class MainForm : Form
         ForeColor = Color.WhiteSmoke;
         Font = new Font("Segoe UI", 9f);
         Icon = AppIcon.Load();
+
+        _rowTip = new ToolTip
+        {
+            AutoPopDelay = 15000,
+            InitialDelay = 400,
+            ReshowDelay = 200,
+            ShowAlways = true,
+            IsBalloon = false,
+        };
 
         // Header
         var header = new Panel
@@ -392,6 +402,38 @@ public sealed class MainForm : Form
         row.Controls.Add(btnEdit);
         row.Controls.Add(btnDel);
 
+        // Full-text tooltip + soft hover highlight on the whole row
+        string tipText = memo.Text.Length > 2000 ? memo.Text[..2000] + "…" : memo.Text;
+        _rowTip.SetToolTip(row, tipText);
+        _rowTip.SetToolTip(lbl, tipText);
+
+        Color normalBg = Color.FromArgb(48, 48, 54);
+        Color hoverBg = Color.FromArgb(62, 78, 104); // soft blue-grey highlight
+
+        void SetHover(bool on)
+        {
+            row.BackColor = on ? hoverBg : normalBg;
+            lbl.BackColor = on ? hoverBg : normalBg;
+        }
+
+        void WireHover(Control c)
+        {
+            c.MouseEnter += (_, _) => SetHover(true);
+            c.MouseLeave += (_, _) =>
+            {
+                // Keep highlight if pointer moved onto another child of this row
+                var pt = row.PointToClient(Cursor.Position);
+                if (!row.ClientRectangle.Contains(pt))
+                    SetHover(false);
+            };
+        }
+
+        WireHover(row);
+        WireHover(lbl);
+        WireHover(btnPin);
+        WireHover(btnEdit);
+        WireHover(btnDel);
+
         btnPin.MouseEnter += (_, _) => SetStatus(memo.Pinned ? "Unpin" : "Pin");
         btnEdit.MouseEnter += (_, _) => SetStatus("Edit");
         btnDel.MouseEnter += (_, _) => SetStatus("Delete");
@@ -482,6 +524,7 @@ public sealed class MainForm : Form
         {
             _hotkey?.Dispose();
             _statusTimer?.Dispose();
+            _rowTip.Dispose();
         }
         base.Dispose(disposing);
     }

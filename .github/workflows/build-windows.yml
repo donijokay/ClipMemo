@@ -53,27 +53,26 @@ jobs:
           Compress-Archive -Path dist/ClipMemo-win/* -DestinationPath dist/ClipMemo.zip -Force
 
       - name: Upload artifact
-              uses: actions/upload-artifact@v4
-                      with:
-                                name: ClipMemo-windows
-                                          path: dist/ClipMemo.zip
+        uses: actions/upload-artifact@v4
+        with:
+          name: ClipMemo-windows
+          path: dist/ClipMemo.zip
 
-                                                - name: Attach to GitHub Release
-                                                        if: startsWith(github.ref, 'refs/tags/')
-                                                                env:
-                                                                          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-                                                                                  run: |
-                                                                                            gh release upload "${{ github.ref_name }}" dist/ClipMemo.zip --clobber
+      - name: Attach to GitHub Release
+        if: startsWith(github.ref, 'refs/tags/')
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release upload "${{ github.ref_name }}" dist/ClipMemo.zip --clobber
 
-                                                                                                  - name: Attach to latest release (manual dispatch)
-                                                                                                          if: github.event_name == 'workflow_dispatch'
-                                                                                                                  env:
-                                                                                                                            GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-                                                                                                                                    run: |
-                                                                                                                                              $tag = gh release list --limit 1 --json tagName -q '.[0].tagName'
-                                                                                                                                                        if ($tag) {
-                                                                                                                                                                    gh release upload $tag dist/ClipMemo.zip --clobber
-                                                                                                                                                                              } else {
-                                                                                                                                                                                          gh release create v1.0.1 dist/ClipMemo.zip --title "ClipMemo v1.0.1" --notes "Windows exe build (ClipMemo.zip)."
-                                                                                                                                                                                                    }
-                                                                                                                                                                                                    
+      - name: Attach to latest release (manual dispatch)
+        if: github.event_name == 'workflow_dispatch'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          $tag = gh release list --limit 1 --json tagName -q '.[0].tagName'
+          if ($tag) {
+            gh release upload $tag dist/ClipMemo.zip --clobber
+          } else {
+            gh release create v1.0.1 dist/ClipMemo.zip --title "ClipMemo v1.0.1" --notes "Windows exe build (ClipMemo.zip)."
+          }

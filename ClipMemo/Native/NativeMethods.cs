@@ -1,3 +1,4 @@
+using System.Windows.Forms;
 using System.Runtime.InteropServices;
 
 namespace ClipMemo.Native;
@@ -19,4 +20,30 @@ internal static class NativeMethods
 
     [DllImport("user32.dll", SetLastError = true)]
     public static extern bool DestroyIcon(IntPtr hIcon);
+
+    [DllImport("uxtheme.dll", ExactSpelling = true, CharSet = CharSet.Unicode)]
+    public static extern int SetWindowTheme(IntPtr hWnd, string pszSubAppName, string? pszSubIdList);
+
+    public const int DWMWA_USE_IMMERSIVE_DARK_MODE = 20;
+
+    [DllImport("dwmapi.dll")]
+    public static extern int DwmSetWindowAttribute(IntPtr hwnd, int dwAttribute, ref int pvAttribute, int cbAttribute);
+
+    public static void TryApplyDarkScrollbars(Control control)
+    {
+        if (!control.IsHandleCreated)
+            return;
+        try
+        {
+            // Dark explorer theme for native scrollbars (Win10/11)
+            _ = SetWindowTheme(control.Handle, "DarkMode_Explorer", null);
+            int useDark = 1;
+            _ = DwmSetWindowAttribute(control.Handle, DWMWA_USE_IMMERSIVE_DARK_MODE, ref useDark, sizeof(int));
+        }
+        catch
+        {
+            /* older OS / no-op */
+        }
+    }
 }
+

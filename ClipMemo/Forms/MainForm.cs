@@ -49,6 +49,7 @@ public sealed class MainForm : Form
         ForeColor = Color.WhiteSmoke;
         Font = new Font("Segoe UI", 9f);
         Icon = AppIcon.Load();
+        HandleCreated += (_, _) => NativeMethods.TryApplyDarkScrollbars(this);
 
         _fullPreviewLabel = new Label
         {
@@ -160,6 +161,9 @@ public sealed class MainForm : Form
             BackColor = Color.FromArgb(36, 36, 40),
             Padding = new Padding(4),
         };
+        void ApplyListTheme() => NativeMethods.TryApplyDarkScrollbars(_list);
+        _list.HandleCreated += (_, _) => ApplyListTheme();
+        _list.Layout += (_, _) => ApplyListTheme();
 
         _emptyLabel = new Label
         {
@@ -370,21 +374,25 @@ public sealed class MainForm : Form
             Tag = memo,
         };
 
-        // One-line preview; AutoEllipsis shows "…" only when the label actually clips
+        // Single-line display with manual ellipsis (no AutoEllipsis — that shows a white OS tooltip)
         string flat = memo.Text.Replace('\n', ' ').Replace('\r', ' ').Trim();
+        var lblFont = new Font("Segoe UI", 9.5f);
+        int labelW = width - 118;
+        string display = FitSingleLine(flat, lblFont, labelW);
+        bool isTruncated = display != flat;
 
         var lbl = new Label
         {
-            Text = flat,
+            Text = display,
             AutoSize = false,
-            AutoEllipsis = true,
+            AutoEllipsis = false,
             Location = new Point(10, 6),
-            Size = new Size(width - 118, rowH - 12),
+            Size = new Size(labelW, rowH - 12),
             TextAlign = ContentAlignment.MiddleLeft,
             ForeColor = Color.WhiteSmoke,
             Cursor = Cursors.Hand,
             Tag = memo,
-            Font = new Font("Segoe UI", 9.5f),
+            Font = lblFont,
         };
         lbl.Click += (_, _) => CopyMemo(memo);
         row.Click += (_, _) => CopyMemo(memo);
@@ -425,8 +433,8 @@ public sealed class MainForm : Form
             lbl.BackColor = on ? hoverBg : normalBg;
             if (on)
             {
-                // Full-text panel ONLY when the label is actually ellipsized (clipped)
-                if (IsLabelTextClipped(lbl))
+                // Full-text panel ONLY when we truncated the row text with "…"
+                if (isTruncated)
                     ShowFullPreview(row, memo.Text);
                 else
                     HideFullPreviewIfOwner(row);
@@ -461,20 +469,29 @@ public sealed class MainForm : Form
     }
 
 
-    /// <summary>True when the label cannot show its full Text (AutoEllipsis would show …).</summary>
-    private static bool IsLabelTextClipped(Label label)
+    /// <summary>Fit text to one line; append "…" when it would exceed maxWidth.</summary>
+    private static string FitSingleLine(string text, Font font, int maxWidth)
     {
-        if (string.IsNullOrEmpty(label.Text) || label.ClientSize.Width <= 0)
-            return false;
+        if (string.IsNullOrEmpty(text) || maxWidth <= 0)
+            return text ?? "";
 
-        Size needed = TextRenderer.MeasureText(
-            label.Text,
-            label.Font,
-            new Size(int.MaxValue, label.ClientSize.Height),
-            TextFormatFlags.SingleLine | TextFormatFlags.NoPrefix | TextFormatFlags.NoPadding);
+        var flags = TextFormatFlags.SingleLine | TextFormatFlags.NoPrefix | TextFormatFlags.NoPadding;
+        if (TextRenderer.MeasureText(text, font, Size.Empty, flags).Width <= maxWidth)
+            return text;
 
-        // Small slack so near-fit short memos do not trigger the full preview
-        return needed.Width > label.ClientSize.Width + 2;
+        const string ellipsis = "…";
+        int lo = 0, hi = text.Length;
+        while (lo < hi)
+        {
+            int mid = (lo + hi + 1) / 2;
+            string candidate = text[..mid].TrimEnd() + ellipsis;
+            if (TextRenderer.MeasureText(candidate, font, Size.Empty, flags).Width <= maxWidth)
+                lo = mid;
+            else
+                hi = mid - 1;
+        }
+
+        return lo <= 0 ? ellipsis : text[..lo].TrimEnd() + ellipsis;
     }
 
     private void ShowFullPreview(Control owner, string text)

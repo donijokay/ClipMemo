@@ -371,9 +371,13 @@ public sealed class MainForm : Form
             Tag = memo,
         };
 
-        string preview = memo.Text.Replace('\n', ' ').Replace('\r', ' ').Trim();
-        if (preview.Length > PreviewLen)
-            preview = preview[..(PreviewLen - 1)] + "…";
+        string flat = memo.Text.Replace('\n', ' ').Replace('\r', ' ').Trim();
+        bool truncated = flat.Length > PreviewLen
+            || memo.Text.IndexOf('\n') >= 0
+            || memo.Text.IndexOf('\r') >= 0;
+        string preview = flat.Length > PreviewLen
+            ? flat[..(PreviewLen - 1)] + "…"
+            : flat;
 
         var lbl = new Label
         {
@@ -388,6 +392,15 @@ public sealed class MainForm : Form
             // Slightly larger type + padding so a full line is easy to read
             Font = new Font("Segoe UI", 9.5f),
         };
+
+        // Also treat as truncated if the full one-line text is wider than the label
+        if (!truncated && flat.Length > 0)
+        {
+            int textW = TextRenderer.MeasureText(flat, lbl.Font, Size.Empty,
+                TextFormatFlags.SingleLine | TextFormatFlags.NoPadding).Width;
+            if (textW > lbl.Width)
+                truncated = true;
+        }
         lbl.Click += (_, _) => CopyMemo(memo);
         row.Click += (_, _) => CopyMemo(memo);
 
@@ -426,7 +439,13 @@ public sealed class MainForm : Form
             row.BackColor = on ? hoverBg : normalBg;
             lbl.BackColor = on ? hoverBg : normalBg;
             if (on)
-                ShowFullPreview(row, memo.Text);
+            {
+                // Full-text panel only when the row text is truncated / too long
+                if (truncated)
+                    ShowFullPreview(row, memo.Text);
+                else
+                    HideFullPreviewIfOwner(row);
+            }
             else
                 HideFullPreviewIfOwner(row);
         }

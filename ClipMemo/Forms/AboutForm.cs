@@ -12,7 +12,6 @@ public sealed class AboutForm : Form
             .GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion
             ?? Assembly.GetExecutingAssembly().GetName().Version?.ToString(3)
             ?? "2.0.0";
-        // trim git hash if present
         int plus = version.IndexOf('+');
         if (plus > 0) version = version[..plus];
 
@@ -22,11 +21,14 @@ public sealed class AboutForm : Form
         MinimizeBox = false;
         ShowInTaskbar = false;
         StartPosition = FormStartPosition.CenterParent;
-        ClientSize = new Size(360, 260);
+        AutoScaleMode = AutoScaleMode.Dpi;
+        ClientSize = new Size(400, 300);
+        MinimumSize = new Size(400, 300);
         BackColor = Color.FromArgb(28, 28, 32);
         ForeColor = Color.WhiteSmoke;
         Font = new Font("Segoe UI", 9f);
         Icon = AppIcon.Load();
+        Padding = new Padding(24);
 
         var logo = new PictureBox
         {
@@ -50,18 +52,19 @@ public sealed class AboutForm : Form
         {
             Text = "Version " + version,
             AutoSize = true,
-            Location = new Point(88, 52),
+            Location = new Point(88, 54),
             ForeColor = Color.Gray,
         };
 
         var body = new Label
         {
-            Text = "Tray clipboard memo for Windows.\n"
-                 + "Multi-item history with pin, edit, search,\n"
-                 + "global hotkey, and Start with Windows.\n\n"
+            Text = "Tray clipboard memo for Windows.\r\n"
+                 + "Multi-item history with pin, edit, search,\r\n"
+                 + "global hotkey, and Start with Windows.\r\n\r\n"
                  + "License: MIT",
-            AutoSize = true,
-            Location = new Point(24, 92),
+            AutoSize = false,
+            Location = new Point(24, 96),
+            Size = new Size(352, 100),
             ForeColor = Color.WhiteSmoke,
         };
 
@@ -69,20 +72,19 @@ public sealed class AboutForm : Form
         {
             Text = "github.com/donijokay/ClipMemo",
             AutoSize = true,
-            Location = new Point(24, 178),
+            Location = new Point(24, 210),
             LinkColor = Color.FromArgb(100, 180, 255),
             ActiveLinkColor = Color.White,
             VisitedLinkColor = Color.FromArgb(100, 180, 255),
         };
-        link.LinkClicked += (_, _) =>
+        link.Links.Clear();
+        link.Links.Add(0, link.Text.Length, "https://github.com/donijokay/ClipMemo");
+        link.LinkClicked += (_, e) =>
         {
             try
             {
-                Process.Start(new ProcessStartInfo
-                {
-                    FileName = "https://github.com/donijokay/ClipMemo",
-                    UseShellExecute = true,
-                });
+                string url = e.Link?.LinkData as string ?? "https://github.com/donijokay/ClipMemo";
+                Process.Start(new ProcessStartInfo { FileName = url, UseShellExecute = true });
             }
             catch { /* ignore */ }
         };
@@ -90,12 +92,13 @@ public sealed class AboutForm : Form
         var ok = new Button
         {
             Text = "OK",
-            Size = new Size(88, 30),
-            Location = new Point(248, 210),
+            Size = new Size(96, 32),
+            Location = new Point(280, 248),
             FlatStyle = FlatStyle.Flat,
             BackColor = Color.FromArgb(64, 156, 255),
             ForeColor = Color.White,
             DialogResult = DialogResult.OK,
+            Anchor = AnchorStyles.Bottom | AnchorStyles.Right,
         };
         ok.FlatAppearance.BorderSize = 0;
         AcceptButton = ok;

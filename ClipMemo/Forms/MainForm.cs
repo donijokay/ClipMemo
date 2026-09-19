@@ -460,6 +460,23 @@ public sealed class MainForm : Form
         return row;
     }
 
+
+    /// <summary>True when the label cannot show its full Text (AutoEllipsis would show …).</summary>
+    private static bool IsLabelTextClipped(Label label)
+    {
+        if (string.IsNullOrEmpty(label.Text) || label.ClientSize.Width <= 0)
+            return false;
+
+        Size needed = TextRenderer.MeasureText(
+            label.Text,
+            label.Font,
+            new Size(int.MaxValue, label.ClientSize.Height),
+            TextFormatFlags.SingleLine | TextFormatFlags.NoPrefix | TextFormatFlags.NoPadding);
+
+        // Small slack so near-fit short memos do not trigger the full preview
+        return needed.Width > label.ClientSize.Width + 2;
+    }
+
     private void ShowFullPreview(Control owner, string text)
     {
         _previewOwner = owner;

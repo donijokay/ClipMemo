@@ -74,15 +74,20 @@ internal static class AppIcon
         }
         catch { /* fall through */ }
 
+        // Prefer a fresh drawn bitmap so we never dispose/touch the tray Icon cache
+        try { return DrawCmBitmap(size); }
+        catch { /* fall through */ }
+
         try
         {
-            using var icon = Load();
+            // Do NOT dispose Load() — cached Icon is owned by the tray NotifyIcon
+            var icon = Load();
             using var fromIcon = icon.ToBitmap();
             return new Bitmap(fromIcon, new Size(size, size));
         }
         catch { /* fall through */ }
 
-        return DrawCmBitmap(size);
+        return new Bitmap(size, size);
     }
 
     public static Bitmap DrawCmBitmap(int size)

@@ -349,7 +349,7 @@ public sealed class MainForm : Form
         {
             _store.Delete(memo.Id);
             RefreshList();
-            FlashStatus("Dihapus.");
+            FlashStatus("Deleted.");
         };
 
         row.Controls.Add(lbl);
@@ -360,7 +360,7 @@ public sealed class MainForm : Form
         btnPin.MouseEnter += (_, _) => SetStatus(memo.Pinned ? "Unpin" : "Pin");
         btnEdit.MouseEnter += (_, _) => SetStatus("Edit");
         btnDel.MouseEnter += (_, _) => SetStatus("Delete");
-        lbl.MouseEnter += (_, _) => SetStatus("Klik untuk salin");
+        lbl.MouseEnter += (_, _) => SetStatus("Click to copy");
 
         return row;
     }
@@ -393,7 +393,7 @@ public sealed class MainForm : Form
         }
         catch
         {
-            FlashStatus("Gagal menyalin.");
+            FlashStatus("Copy failed.");
         }
     }
 

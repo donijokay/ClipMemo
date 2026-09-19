@@ -80,16 +80,17 @@ public sealed class MainForm : Form
             BackColor = Color.FromArgb(28, 28, 32),
         };
 
-        var badge = new Label
+        // Same CM logo as the tray icon (not a plain "C" label)
+        var badge = new PictureBox
         {
-            Text = "CM",
+            Image = AppIcon.GetLogoBitmap(28),
             Size = new Size(28, 28),
             Location = new Point(12, 6),
-            TextAlign = ContentAlignment.MiddleCenter,
-            BackColor = Color.FromArgb(64, 156, 255),
-            ForeColor = Color.White,
-            Font = new Font("Segoe UI", 9f, FontStyle.Bold),
+            SizeMode = PictureBoxSizeMode.Zoom,
+            BackColor = Color.Transparent,
+            Cursor = Cursors.Hand,
         };
+        badge.Click += (_, _) => AboutForm.ShowAbout(this);
 
         var title = new Label
         {

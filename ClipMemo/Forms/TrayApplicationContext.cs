@@ -41,6 +41,7 @@ public sealed class TrayApplicationContext : ApplicationContext
         _menu.Items.Add(new ToolStripMenuItem("Settings…", null, OnSettings));
         _menu.Items.Add(_autostartItem);
         _menu.Items.Add(new ToolStripSeparator());
+        _menu.Items.Add(new ToolStripMenuItem("About…", null, OnAbout));
         _menu.Items.Add(new ToolStripMenuItem("Exit", null, OnExit));
 
         _tray = new NotifyIcon
@@ -146,6 +147,12 @@ public sealed class TrayApplicationContext : ApplicationContext
         {
             MessageBox.Show("Settings error: " + ex.Message, "ClipMemo", MessageBoxButtons.OK, MessageBoxIcon.Error);
         }
+    }
+
+
+    private void OnAbout(object? sender, EventArgs e)
+    {
+        AboutForm.ShowAbout(_form.Visible ? _form : null);
     }
 
     private void OnExit(object? sender, EventArgs e)

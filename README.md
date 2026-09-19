@@ -117,6 +117,7 @@ Semua memo disimpan **hanya di komputer Anda** (`%APPDATA%\\ClipMemo`). Tidak ad
 
 ---
 
-## Lisensi
+## Lisensi / License
 
-Gunakan bebas untuk kebutuhan pribadi. Tidak ada jaminan.
+MIT License — lihat [`LICENSE`](LICENSE).
+

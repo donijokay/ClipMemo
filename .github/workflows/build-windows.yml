@@ -20,17 +20,16 @@ jobs:
         with:
           dotnet-version: "8.0.x"
 
-      - name: Publish ClipMemo (win-x64 self-contained)
+      - name: Publish ClipMemo (win-x64, framework-dependent)
         run: >
           dotnet publish ClipMemo/ClipMemo.csproj
           -c Release
           -r win-x64
-          --self-contained true
+          --self-contained false
           -p:PublishSingleFile=true
-          -p:IncludeNativeLibrariesForSelfExtract=true
           -o publish
 
-      - name: Pack zip like AutoHDR
+      - name: Pack zip
         shell: pwsh
         run: |
           New-Item -ItemType Directory -Force -Path dist/ClipMemo-win | Out-Null
@@ -38,6 +37,7 @@ jobs:
           Copy-Item README.md dist/ClipMemo-win/README.md
           Copy-Item LICENSE dist/ClipMemo-win/LICENSE
           Compress-Archive -Path dist/ClipMemo-win/* -DestinationPath dist/ClipMemo.zip -Force
+          Get-Item dist/ClipMemo.zip | Select-Object Name, Length
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
@@ -45,12 +45,23 @@ jobs:
           name: ClipMemo-windows
           path: dist/ClipMemo.zip
 
+      - name: Ensure release exists (tag)
+        if: startsWith(github.ref, 'refs/tags/')
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        shell: pwsh
+        run: |
+          $tag = "${{ github.ref_name }}"
+          gh release view $tag 2>$null
+          if ($LASTEXITCODE -ne 0) {
+            gh release create $tag --title "ClipMemo $tag" --notes "Native C# ClipMemo (framework-dependent win-x64). Requires .NET 8 Desktop Runtime."
+          }
+
       - name: Attach to GitHub Release (tag)
         if: startsWith(github.ref, 'refs/tags/')
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          gh release upload "${{ github.ref_name }}" dist/ClipMemo.zip --clobber
+        run: gh release upload "${{ github.ref_name }}" dist/ClipMemo.zip --clobber
 
       - name: Attach to latest release (manual dispatch)
         if: github.event_name == 'workflow_dispatch'
@@ -59,8 +70,8 @@ jobs:
         shell: pwsh
         run: |
           $tag = gh release list --limit 1 --json tagName -q '.[0].tagName'
-          if ($tag) {
-            gh release upload $tag dist/ClipMemo.zip --clobber
+          if (-not $tag) {
+            gh release create v2.0.0 dist/ClipMemo.zip --title "ClipMemo v2.0.0" --notes "Native C# ClipMemo (framework-dependent). Requires .NET 8 Desktop Runtime."
           } else {
-            gh release create v2.0.0 dist/ClipMemo.zip --title "ClipMemo v2.0.0" --notes "Native C# Windows tray app (ClipMemo.zip / ClipMemo.exe)."
+            gh release upload $tag dist/ClipMemo.zip --clobber
           }

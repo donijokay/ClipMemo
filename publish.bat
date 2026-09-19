@@ -2,8 +2,8 @@
 setlocal
 cd /d "%~dp0"
 
-echo Publishing ClipMemo (win-x64, self-contained, single-file)...
-dotnet publish ClipMemo\ClipMemo.csproj -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -o publish\win-x64
+echo Publishing ClipMemo (win-x64, framework-dependent — requires .NET 8 Desktop Runtime)...
+dotnet publish ClipMemo\ClipMemo.csproj -c Release -r win-x64 --self-contained false -p:PublishSingleFile=true -o publish\win-x64
 
 if errorlevel 1 (
   echo Publish failed.
@@ -12,5 +12,6 @@ if errorlevel 1 (
 
 echo.
 echo Done. Output: %~dp0publish\win-x64\ClipMemo.exe
-echo Data: %%AppData%%\ClipMemo\memos.json and settings.json
+echo Requires: .NET 8 Desktop Runtime https://dotnet.microsoft.com/download/dotnet/8.0
+echo Data: %%AppData%%\ClipMemo
 endlocal

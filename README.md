@@ -6,7 +6,11 @@ UI dalam **Bahasa Indonesia**. Versi **2.0.0** = aplikasi tray native **C# / Win
 
 ---
 
-## Unduhan Windows (exe)
+## Unduhan
+
+**Catatan ukuran:** build **bukan** self-contained — `ClipMemo.exe` relatif kecil, tapi PC perlu [.NET 8 Desktop Runtime](https://dotnet.microsoft.com/download/dotnet/8.0).
+
+ Windows (exe)
 
 Rilis GitHub berisi **`ClipMemo.zip`** (di dalamnya `ClipMemo.exe`):
 

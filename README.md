@@ -6,6 +6,16 @@ UI strings are in **Indonesian**. This README is bilingual.
 
 ---
 
+
+## Unduhan Windows (exe)
+
+Rilis GitHub menyertakan **`ClipMemo.zip`** (berisi `ClipMemo.exe`), mirip AutoHDR:
+
+1. Buka [Releases](https://github.com/donijokay/ClipMemo/releases)
+2. Unduh `ClipMemo.zip`, ekstrak, jalankan `ClipMemo.exe`
+
+Build otomatis: workflow **Build Windows exe** (PyInstaller di `windows-latest`).
+
 ## Fitur / Features
 
 | Fitur | Description |

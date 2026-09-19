@@ -63,15 +63,19 @@ def _resolve_python_launcher() -> str:
 
 
 def _write_start_cmd() -> Path:
-    """Write APPDATA\\ClipMemo\\start_clipmemo.cmd that launches the app."""
+    """Write APPDATA\ClipMemo\start_clipmemo.cmd that launches the app."""
     data_dir = get_data_dir()
     data_dir.mkdir(parents=True, exist_ok=True)
     cmd_path = _start_cmd_path()
-    launcher = _resolve_python_launcher()
-    # Use quoted paths; /c style via cmd file content
+    if getattr(sys, "frozen", False):
+        # PyInstaller / frozen build: run the .exe directly
+        launch = f'"{sys.executable}"'
+    else:
+        launcher = _resolve_python_launcher()
+        launch = f'"{launcher}" -m clipmemo'
     lines = [
         "@echo off",
-        f'"{launcher}" -m clipmemo',
+        launch,
     ]
     cmd_path.write_text("\r\n".join(lines) + "\r\n", encoding="utf-8")
     return cmd_path

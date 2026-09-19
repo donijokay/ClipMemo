@@ -106,7 +106,7 @@ public sealed class SettingsForm : Form
             ForeColor = Color.WhiteSmoke,
         };
 
-        foreach (var c in new Control[] { _ctrl, _shift, _alt, _win })
+        foreach (var c in new[] { _ctrl, _shift, _alt, _win })
             c.CheckedChanged += (_, _) => RefreshPreview();
 
         Controls.Add(title);

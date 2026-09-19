@@ -115,6 +115,39 @@ public sealed class TrayApplicationContext : ApplicationContext
         }
     }
 
+
+    private void OnSettings(object? sender, EventArgs e)
+    {
+        try
+        {
+            using var dlg = new SettingsForm(_settings);
+            if (dlg.ShowDialog() != DialogResult.OK)
+                return;
+
+            _settings = dlg.ResultSettings;
+            _settingsService.Save(_settings);
+
+            try { StartupService.SetStartWithWindows(_settings.Autostart); }
+            catch { /* ignore */ }
+            _autostartItem.Checked = StartupService.IsStartWithWindowsEnabled() || _settings.Autostart;
+
+            if (!_form.ApplyHotkey(_settings.HotkeyModifiers, _settings.HotkeyVk))
+            {
+                MessageBox.Show(
+                    "Could not register that shortcut. It may be in use.",
+                    "ClipMemo",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Warning);
+            }
+
+            _tray.Text = "ClipMemo (" + HotkeyFormatter.Format(_settings.HotkeyModifiers, _settings.HotkeyVk) + ")";
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show("Settings error: " + ex.Message, "ClipMemo", MessageBoxButtons.OK, MessageBoxIcon.Error);
+        }
+    }
+
     private void OnExit(object? sender, EventArgs e)
     {
         try

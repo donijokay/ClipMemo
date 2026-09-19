@@ -85,7 +85,6 @@ public sealed class MainForm : Form
             Font = new Font("Segoe UI", 8.5f),
         };
         _hotkeyHint.Location = new Point(PanelWidth - 130, 12);
-        var hotkeyHint = _hotkeyHint;
 
         header.Controls.Add(badge);
         header.Controls.Add(title);

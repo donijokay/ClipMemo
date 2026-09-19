@@ -81,16 +81,21 @@ public sealed class MainForm : Form
         };
 
         // Same CM logo as the tray icon (not a plain "C" label)
+        Image? logoImg = null;
+        try { logoImg = AppIcon.GetLogoBitmap(28); } catch { /* ignore */ }
         var badge = new PictureBox
         {
-            Image = AppIcon.GetLogoBitmap(28),
+            Image = logoImg,
             Size = new Size(28, 28),
             Location = new Point(12, 6),
             SizeMode = PictureBoxSizeMode.Zoom,
-            BackColor = Color.Transparent,
+            BackColor = logoImg is null ? Color.FromArgb(64, 156, 255) : Color.Transparent,
             Cursor = Cursors.Hand,
         };
-        badge.Click += (_, _) => AboutForm.ShowAbout(this);
+        badge.Click += (_, _) =>
+        {
+            try { AboutForm.ShowAbout(this); } catch { /* ignore */ }
+        };
 
         var title = new Label
         {

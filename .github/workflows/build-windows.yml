@@ -32,11 +32,32 @@ jobs:
       - name: Pack zip
         shell: pwsh
         run: |
-          New-Item -ItemType Directory -Force -Path dist/ClipMemo-win | Out-Null
+          New-Item -ItemType Directory -Force -Path dist/ClipMemo-win/Assets | Out-Null
           Copy-Item publish/ClipMemo.exe dist/ClipMemo-win/ClipMemo.exe
+          if (Test-Path publish/Assets) { Copy-Item publish/Assets/* dist/ClipMemo-win/Assets/ -Force }
+          elseif (Test-Path ClipMemo/Assets) { Copy-Item ClipMemo/Assets/* dist/ClipMemo-win/Assets/ -Force }
           Copy-Item README.md dist/ClipMemo-win/README.md
           Copy-Item LICENSE dist/ClipMemo-win/LICENSE
+          @"
+          ClipMemo — how to run
+          =====================
+
+          1) Install .NET 8 Desktop Runtime (x64), if you do not have it yet:
+             https://dotnet.microsoft.com/download/dotnet/8.0
+             (choose "Desktop Runtime" → Windows x64)
+
+          2) Unzip this folder anywhere.
+
+          3) Double-click ClipMemo.exe
+             If Windows SmartScreen appears: More info → Run anyway.
+
+          4) Look for the CM icon in the system tray (near the clock).
+
+          Catatan (ID): aplikasi ini framework-dependent (~100 KB).
+          Wajib .NET 8 Desktop Runtime. Bukan self-contained.
+          "@ | Set-Content -Path dist/ClipMemo-win/INSTALL.txt -Encoding UTF8
           Compress-Archive -Path dist/ClipMemo-win/* -DestinationPath dist/ClipMemo.zip -Force
+          Get-ChildItem dist/ClipMemo-win -Recurse | Select-Object FullName, Length
           Get-Item dist/ClipMemo.zip | Select-Object Name, Length
 
       - name: Upload artifact

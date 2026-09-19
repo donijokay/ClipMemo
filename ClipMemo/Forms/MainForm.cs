@@ -77,18 +77,19 @@ public sealed class MainForm : Form
             ForeColor = Color.White,
         };
 
-        var hotkeyHint = _hotkeyHint = new Label
+        _hotkeyHint = new Label
         {
-            Text = "Ctrl+Shift+V"  // updated by UpdateHotkeyHint,
+            Text = "Ctrl+Shift+V",
             AutoSize = true,
             ForeColor = Color.Gray,
             Font = new Font("Segoe UI", 8.5f),
         };
-        hotkeyHint.Location = new Point(PanelWidth - 130, 12);
+        _hotkeyHint.Location = new Point(PanelWidth - 130, 12);
+        var hotkeyHint = _hotkeyHint;
 
         header.Controls.Add(badge);
         header.Controls.Add(title);
-        header.Controls.Add(hotkeyHint);
+        header.Controls.Add(_hotkeyHint!);
 
         // Search
         var searchHost = new Panel
